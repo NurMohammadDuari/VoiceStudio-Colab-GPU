@@ -686,12 +686,26 @@ print(&quot;On the PC: double-click the VoiceStudio icon,&quot;)
 print(&quot;paste the URL from box 2, then paste the API key (Ctrl+V).&quot;)
 print(&quot;=&quot; * 66)</code></pre></div><div class="cell"><div class="cell-hd"><span class="dot"></span><span class="lbl">python</span><span class="num">box 4</span></div><pre><code># 4. Reprint your URL + key (any time you lose them; app must still be running)
 #    Free to run any time. Does NOT restart anything.
-try:
-    print(&quot;URL:\n&quot; + open(&quot;/content/last_tunnel_url.txt&quot;).read().strip())
-    print(&quot;\nAPI KEY:\n&quot; + open(&quot;/content/omnivoice_api_key.txt&quot;).read().strip())
-    print(&quot;\nDouble-click the VoiceStudio icon on your PC and paste both.&quot;)
-except OSError:
-    print(&quot;No saved pair yet - run box 2 first.&quot;)</code></pre></div><div class="cell"><div class="cell-hd"><span class="dot"></span><span class="lbl">python</span><span class="num">box 5</span></div><pre><code># 5. OPTIONAL: dubbing pack - speaker separation (pyannote)
+# Prefer the Drive copy of the key: that is the one that outlived the VM and
+# therefore the one already saved on your PC. Fall back to this VM&#x27;s copy.
+def _read(*paths):
+    for path in paths:
+        try:
+            value = open(path).read().strip()
+        except OSError:
+            continue
+        if value:
+            return value
+    return &quot;&quot;
+
+key = _read(&quot;/content/drive/omnivoice/api_key.txt&quot;, &quot;/content/omnivoice_api_key.txt&quot;)
+url = _read(&quot;/content/last_tunnel_url.txt&quot;)
+if not url or not key:
+    print(&quot;No saved pair here - run box 2 first.&quot;)
+else:
+    print(&quot;URL:\n&quot; + url)
+    print(&quot;\nAPI KEY:\n&quot; + key)
+    print(&quot;\nDouble-click the VoiceStudio icon on your PC and paste both.&quot;)</code></pre></div><div class="cell"><div class="cell-hd"><span class="dot"></span><span class="lbl">python</span><span class="num">box 5</span></div><pre><code># 5. OPTIONAL: dubbing pack - speaker separation (pyannote)
 #    Needed only for Dubbing (and multi-speaker transcripts).
 #
 #    This one needs YOU, once, on the web:
@@ -721,6 +735,25 @@ def call(path, body=None, method=None):
     with urllib.request.urlopen(req, timeout=90) as r:
         raw = r.read().decode()
     return json.loads(raw) if raw.strip() else {}
+
+# Point downloads at exactly the cache the backend reads. Without this, a
+# kernel restart silently sends them to ~/.cache while the backend looks in
+# Drive, and dubbing then reports the models as missing.
+DRIVE_ROOT = &quot;/content/drive/omnivoice&quot;
+if not os.path.isdir(&quot;/content/drive&quot;):
+    try:
+        from google.colab import drive
+        drive.mount(&quot;/content/drive&quot;, force_remount=False)
+    except Exception:
+        pass
+try:
+    _cfg = json.load(open(os.path.join(DRIVE_ROOT, &quot;config.json&quot;)))
+    if _cfg.get(&quot;hf&quot;):
+        os.environ[&quot;HF_HOME&quot;] = _cfg[&quot;hf&quot;]
+except Exception:
+    pass
+os.environ.setdefault(&quot;HF_HUB_DISABLE_SYMLINKS&quot;, &quot;1&quot;)
+print(&quot;model cache:&quot;, os.environ.get(&quot;HF_HOME&quot;, &quot;default&quot;))
 
 token = (HF_TOKEN or &quot;&quot;).strip()
 if not token.startswith(&quot;hf_&quot;):

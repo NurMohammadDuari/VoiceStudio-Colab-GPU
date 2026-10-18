@@ -178,9 +178,18 @@ egress to GitHub release assets is flaky.</p>
 <h3 id="health-says-cannot-reach-it-connection-refused">Health says <code>cannot reach it (Connection refused)</code></h3>
 <p>The tunnel exists but nothing is listening on the VM. Re-run box 2.</p>
 <h3 id="models-downloaded-but-load-is-very-slow">Models downloaded but load is very slow</h3>
-<p>Expected if they live on Google Drive: FUSE is slower than local disk. Set
-<code>PERSIST_TO_GOOGLE_DRIVE = False</code> in box 1 to keep models local and accept
-re-downloading after a VM reset.</p>
+<p>Expected if they live on Google Drive: weights are copied there and FUSE is
+slower than local disk. Set <code>PERSIST_TO_GOOGLE_DRIVE = False</code> in box 1 to keep
+models local, accepting a re-download after a VM reset.</p>
+<h3 id="models-report-still-needed-although-box-3-finished">Models report "still needed" although box 3 finished</h3>
+<p>The box downloaded into a different cache than the backend reads — almost always
+after a kernel restart. Re-run box 3: it re-applies the Drive/<code>HF_HOME</code> config
+itself before downloading. The same applies to box 5 (dubbing).</p>
+<h3 id="box-2-backend-did-not-come-up-on-a-re-run">Box 2: <code>Backend did not come up</code> on a re-run</h3>
+<p>A previous backend can keep port 3900. Box 2 reclaims the port without relying
+on <code>lsof</code> (absent from many minimal images) by matching its own uvicorn process
+in <code>/proc</code>, then falling back to <code>fuser</code>. If it still fails:
+<code>!tail -40 /content/omnivoice_backend.log</code>.</p>
 <h3 id="gpu-turbo-not-available"><code>GPU Turbo not available (...)</code></h3>
 <p>Non-fatal. FlashInfer has no wheel for this CUDA build (common on the free T4's
 sm75 architecture). Everything else still works, just without the ~2× kernel

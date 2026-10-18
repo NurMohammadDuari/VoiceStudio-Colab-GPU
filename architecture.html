@@ -249,16 +249,19 @@ from loopback. That is what makes the backend correctly see your PC as a
 <p>Colab wipes <code>/content</code> when the VM is recycled. Box 1 mounts Drive and stores:</p>
 <pre><code>/content/drive/omnivoice/
 ├── config.json      paths to the model cache and the data dir
-├── hf/              model weights (if the mount supports symlinks)
+├── hf/              model weights (stored in copy mode - see below)
 ├── data/            settings, licences, accepted models, cloned voices
 └── api_key.txt      the API key - survives VM resets
 </code></pre>
 <p>Because the key survives, the one already saved on your PC keeps working after a
 recycle. Only the URL changes.</p>
-<p><strong>Symlink caveat:</strong> the Hugging Face cache stores weights as symlinks into
-<code>blobs/</code>. Drive's FUSE mount refuses symlinks, which would break every download.
-Box 1 probes this and keeps the model cache local automatically when Drive
-cannot host it.</p>
+<p><strong>Symlinks:</strong> by default the Hugging Face cache stores weights as symlinks into
+<code>blobs/</code>, and Drive's FUSE mount refuses symlinks. Box 1 therefore sets
+<code>HF_HUB_DISABLE_SYMLINKS=1</code>, which makes <code>huggingface_hub</code> <strong>copy</strong> each file
+while keeping the same <code>snapshots/</code> layout — so the cache stays readable by the
+app's <code>is_cached()</code> detector and still lives on Drive. The flag is read once at
+import time, which is why boxes 1, 2, 3 and 5 each set it before importing
+<code>huggingface_hub</code>.</p>
 <hr />
 <h2 id="the-key-handshake">The key handshake</h2>
 <p>Exactly what the desktop app does, and what box 2 verifies before printing:</p>
