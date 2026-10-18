@@ -80,7 +80,7 @@ pyannote repos for dubbing. Box 4 prints what is actually on disk.
 ### Why must I accept a licence before generating?
 
 Models whose licence is not `commercial` fail closed until you acknowledge the
-terms. It is a local honesty gate, not a security boundary — but it is
+terms. That acknowledgement is yours to make: box 3 ships with `ACCEPT_MODEL_LICENCES = False` and will not record it on your behalf. It is a local honesty gate, not a security boundary — but it is
 enforced on use, so generation is blocked until it is recorded.
 
 ### Do I need a Hugging Face account?

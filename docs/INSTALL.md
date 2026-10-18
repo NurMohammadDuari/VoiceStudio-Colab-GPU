@@ -68,9 +68,16 @@ ls -l ~/.local/bin/voicestudio-remote ~/Desktop/VoiceStudio.desktop
 |---|---|---|
 | 1 | Installs the app on the VM, mounts Google Drive, optionally installs GPU Turbo | once per VM |
 | 2 | Starts the backend, opens the public tunnel, prints **URL + API key** | every time Colab restarts |
-| 3 | Downloads models, accepts licences, sets privacy, activates Max quality | once per VM |
+| 3 | Downloads models, sets privacy, activates Max quality | once per VM |
 | 4 | Reprints the URL and key | any time you lose them |
 | 5 | Optional: dubbing pack (speaker separation) | once, if you want dubbing |
+
+### ### Licence acceptance is deliberately not automatic
+
+Box 3 ships with `ACCEPT_MODEL_LICENCES = False`. Acceptance is a legal
+acknowledgement of each model's terms, so the notebook refuses to record it for
+you. Read them in the app under **Model Catalogue**, then set that flag to
+`True` and re-run box 3.
 
 ### Watch for these lines
 
