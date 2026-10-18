@@ -1,0 +1,98 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FAQ</title>
+<meta name="description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:title" content="FAQ">
+<meta property="og:description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://nur-mohammad-duari.github.io/VoiceStudio-Colab-GPU/faq.html">
+<style>*{box-sizing:border-box}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2430;background:#fbfbfd}
+.wrap{display:flex;min-height:100vh}nav{width:250px;flex:0 0 250px;background:#12172a;padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .brand{color:#fff;font-weight:700;margin-bottom:6px}nav .tag{color:#8b93a7;font-size:12px;margin-bottom:22px}
+nav a{display:block;color:#c9d1e0;text-decoration:none;padding:8px 10px;border-radius:7px;font-size:14px;margin-bottom:2px}
+nav a:hover,nav a.on{background:#1e2537;color:#7cf0c8}nav .cta{display:block;margin-top:22px;background:#7cf0c8;color:#12172a;text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+main{flex:1;max-width:840px;padding:44px 40px 80px}
+h1{font-size:2.05rem;line-height:1.25;margin:0 0 6px}h2{font-size:1.3rem;margin:2.2em 0 .5em;padding-top:.5em;border-top:1px solid #e6e8ef}
+h3{font-size:1.05rem;margin:1.6em 0 .4em}p,li{color:#333a4d}code{background:#eef1f6;padding:2px 6px;border-radius:5px;font-size:.88em}
+pre{background:#12172a;color:#e4e8f2;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94em}th,td{border:1px solid #e2e5ec;padding:9px 11px;text-align:left}th{background:#f3f5f9}
+a{color:#1a6f5a}blockquote{border-left:3px solid #7cf0c8;margin:1em 0;padding:2px 16px;color:#4a5468;background:#f4f7f6}
+img{max-width:100%;border-radius:8px}hr{border:0;border-top:1px solid #e6e8ef;margin:2.4em 0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid #e6e8ef;color:#7b849a;font-size:.85rem}</style></head><body><div class="wrap">
+<nav><div class="brand">VoiceStudio<br>on Colab</div><div class="tag">Free GPU. Full features.</div>
+<a href="index.html" class="">Overview</a><a href="install.html" class="">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="on">FAQ</a><a class="cta" href="https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU" target="_blank" rel="noopener">GitHub repo</a></nav>
+<main><h1 id="faq">FAQ</h1>
+<h3 id="does-this-cost-anything">Does this cost anything?</h3>
+<p>No. Free Colab T4, free Cloudflare quick tunnel, and the app is AGPL-3.0 free.
+The paid VoiceStudio "Pro" plan sells a packaged version of what this repo sets
+up.</p>
+<h3 id="is-my-audio-private">Is my audio private?</h3>
+<p>While a run is active, your audio is on the Colab VM and passes over the tunnel
+from Google to your PC — both HTTPS. Your PC never stores it locally.
+Models, settings and cloned voices sit in your Google Drive. Nothing is sent to
+the vendor.</p>
+<h3 id="does-it-phone-home">Does it phone home?</h3>
+<p>The app has opt-in analytics that is <strong>off by default</strong> (box 3 explicitly records
+"no"). If you ever accept it, it sends engine usage, timings and error types —
+never audio or text.</p>
+<h3 id="why-is-gpu-usage-so-low">Why is GPU usage so low?</h3>
+<p>Normal, and not a waste. See below.</p>
+<h3 id="why-is-gpu-usage-so-low_1">Why is GPU usage so low?</h3>
+<p>The TTS model is ~2.4 GB, so ~4 GB of the 15 GB T4 is expected. <strong>VRAM usage is
+not a speed dial</strong> — unused VRAM does not make anything faster. Speed comes from
+kernels, which is what GPU Turbo (FlashInfer) improves: roughly 2× faster
+generations, enabled by default in box 1.</p>
+<p>A T4 also idles between pipeline stages, because chunking, WAV post-processing
+and I/O are CPU work. Low utilisation between bursts is expected.</p>
+<h3 id="why-is-max-slower-than-balanced">Why is Max slower than Balanced?</h3>
+<p>That is what Max is: 64 sampling steps plus postprocess, 8-beam ASR, 8-path
+dictation, NLLB translation with 8 beams. It is the slowest, highest-quality
+preset. Use GPU Turbo to make it bearable, or drop to Balanced for speed.</p>
+<h3 id="how-long-do-i-get">How long do I get?</h3>
+<p>Whatever Colab gives you — commonly up to ~12 GPU-hours per day, with idle tabs
+disconnected sooner. Box 2's heartbeat (every 2 minutes) reduces disconnects but
+cannot beat the hard cap. For 24/7, rent a GPU box; nothing about the setup
+changes except the URL.</p>
+<h3 id="will-my-key-keep-working-after-colab-restarts">Will my key keep working after Colab restarts?</h3>
+<p>Yes, if you enabled Drive persistence (default). The key is stored at
+<code>/content/drive/omnivoice/api_key.txt</code> and reloaded by box 2, so the one already
+on your PC stays valid. Only the URL changes.</p>
+<h3 id="can-i-use-this-from-more-than-one-computer">Can I use this from more than one computer?</h3>
+<p>Yes. That is VoiceStudio Pro's "multiple devices" feature, and it costs nothing
+here. Install the app on the other machine, run the launcher, paste the same URL
+and key. (Pro's paid limit of 3 devices does not apply to the free app.)</p>
+<h3 id="can-i-sell-this">Can I sell this?</h3>
+<p><strong>Not with the default models.</strong> <code>k2-fsa/OmniVoice</code> is <strong>CC-BY-NC</strong> with
+commercial inference restricted, and the tokenizer has its own terms. Selling a
+dubbing or TTS service on that stack is not permitted.</p>
+<p>To sell, you would need commercially licensed models, and note that if you modify
+the app and host it, AGPL-3.0 requires offering your modified source to users.
+VoiceStudio's own <a href="https://voicestudio.sh/pro">Pro</a> and
+<a href="https://voicestudio.sh/cloud">Cloud</a> products exist for that; Cloud is still a
+waitlist.</p>
+<h3 id="which-models-get-downloaded">Which models get downloaded?</h3>
+<p><code>k2-fsa/OmniVoice</code> (TTS), <code>eustlb/higgs-audio-v2-tokenizer</code>,
+<code>Systran/faster-whisper-large-v3</code> (ASR), two sherpa-onnx models (dictation),
+<code>facebook/nllb-200-distilled-600M</code> (translation) — about 5 GB. Optionally three
+pyannote repos for dubbing. Box 4 prints what is actually on disk.</p>
+<h3 id="why-must-i-accept-a-licence-before-generating">Why must I accept a licence before generating?</h3>
+<p>Models whose licence is not <code>commercial</code> fail closed until you acknowledge the
+terms. It is a local honesty gate, not a security boundary — but it is
+enforced on use, so generation is blocked until it is recorded.</p>
+<h3 id="do-i-need-a-hugging-face-account">Do I need a Hugging Face account?</h3>
+<p>Only for dubbing (pyannote repos are gated). Everything else works without one.</p>
+<h3 id="why-do-some-buttons-stay-greyed-out">Why do some buttons stay greyed out?</h3>
+<p>A small set of capabilities act on the backend host's filesystem and can never
+run for a remote client, by design. Saving audio to your PC is unaffected — that
+is an HTTP download. See
+<a href="HOW-IT-WORKS-IN-THE-APP.md">HOW-IT-WORKS-IN-THE-APP.md</a>.</p>
+<h3 id="can-i-use-a-paid-gpu-instead-of-colab">Can I use a paid GPU instead of Colab?</h3>
+<p>Yes — anything that runs Linux with a GPU: a VPS, RunPod, Vast.ai, a spare
+machine. Run box 1 and 2 there (skip the Drive part if you do not need it), open
+a tunnel, paste the URL and key. The app does not care where the backend lives.</p>
+<h3 id="is-this-the-same-as-voicestudio-cloud">Is this the same as VoiceStudio Cloud?</h3>
+<p>No. Cloud is the vendor's hosted product and is still a waitlist. This is the
+open-source app with your own compute behind it.</p>
+<footer>Not affiliated with the VoiceStudio project &mdash; a third-party community setup for the
+AGPL-3.0 app by <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash</a>.
+Colab, free T4, Cloudflare tunnel.</footer></main></div></body></html>

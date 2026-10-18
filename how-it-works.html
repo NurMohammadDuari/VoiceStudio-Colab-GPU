@@ -1,0 +1,270 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How it works inside VoiceStudio</title>
+<meta name="description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:title" content="How it works inside VoiceStudio">
+<meta property="og:description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://nur-mohammad-duari.github.io/VoiceStudio-Colab-GPU/how-it-works.html">
+<style>*{box-sizing:border-box}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2430;background:#fbfbfd}
+.wrap{display:flex;min-height:100vh}nav{width:250px;flex:0 0 250px;background:#12172a;padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .brand{color:#fff;font-weight:700;margin-bottom:6px}nav .tag{color:#8b93a7;font-size:12px;margin-bottom:22px}
+nav a{display:block;color:#c9d1e0;text-decoration:none;padding:8px 10px;border-radius:7px;font-size:14px;margin-bottom:2px}
+nav a:hover,nav a.on{background:#1e2537;color:#7cf0c8}nav .cta{display:block;margin-top:22px;background:#7cf0c8;color:#12172a;text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+main{flex:1;max-width:840px;padding:44px 40px 80px}
+h1{font-size:2.05rem;line-height:1.25;margin:0 0 6px}h2{font-size:1.3rem;margin:2.2em 0 .5em;padding-top:.5em;border-top:1px solid #e6e8ef}
+h3{font-size:1.05rem;margin:1.6em 0 .4em}p,li{color:#333a4d}code{background:#eef1f6;padding:2px 6px;border-radius:5px;font-size:.88em}
+pre{background:#12172a;color:#e4e8f2;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94em}th,td{border:1px solid #e2e5ec;padding:9px 11px;text-align:left}th{background:#f3f5f9}
+a{color:#1a6f5a}blockquote{border-left:3px solid #7cf0c8;margin:1em 0;padding:2px 16px;color:#4a5468;background:#f4f7f6}
+img{max-width:100%;border-radius:8px}hr{border:0;border-top:1px solid #e6e8ef;margin:2.4em 0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid #e6e8ef;color:#7b849a;font-size:.85rem}</style></head><body><div class="wrap">
+<nav><div class="brand">VoiceStudio<br>on Colab</div><div class="tag">Free GPU. Full features.</div>
+<a href="index.html" class="">Overview</a><a href="install.html" class="">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="on">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="">FAQ</a><a class="cta" href="https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU" target="_blank" rel="noopener">GitHub repo</a></nav>
+<main><h1 id="how-it-works-inside-voicestudio">How it works inside VoiceStudio</h1>
+<p>Notes from reading the VoiceStudio source, so you can tell a designed
+restriction from a bug. Line references are from the pinned commit
+<code>f47221a1f0af89df27c34747471daa30391a9487</code>.</p>
+<hr />
+<h2 id="the-gates">The gates</h2>
+<p>Every privileged route depends on one of six functions, all in
+<code>backend/api/dependencies.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>require_admin</code></td>
+<td>loopback, <strong>or</strong> (server mode + a valid admin credential)</td>
+</tr>
+<tr>
+<td><code>require_loopback</code></td>
+<td>loopback; in server mode falls back to the admin rule</td>
+</tr>
+<tr>
+<td><code>require_admin_action</code></td>
+<td>for legacy GETs that have side effects</td>
+</tr>
+<tr>
+<td><code>require_desktop</code></td>
+<td><strong>true loopback only</strong>, never relaxed — file-picker boundary</td>
+</tr>
+<tr>
+<td><code>require_native_access</code></td>
+<td><strong>true loopback only</strong>, never relaxed — host filesystem</td>
+</tr>
+<tr>
+<td><code>require_consumer</code></td>
+<td>consumption tier; open on a bare server with no credential</td>
+</tr>
+</tbody>
+</table>
+<p>The central function is <code>check_admin</code> (dependencies.py:221):</p>
+<pre><code class="language-python">if is_loopback(host): return
+if _server_mode():
+    if read_only and not _admin_credential_configured(request): return   # reads open
+    if _request_presents_admin_credential(request): return               # key/session wins
+_admin_gate_403()
+</code></pre>
+<p>Two consequences:</p>
+<ol>
+<li><strong>Keyless server mode</strong> (no key configured): reads are open, writes are 403.
+   This is the state the very first version of this setup ran in, and why
+   Settings saves and model installs failed with <em>loopback origin required</em>.</li>
+<li><strong>With a key configured</strong>: the read exception in line 1 no longer applies, so
+   <em>everything</em> requires a credential — including reads. The PC app must hold the
+   key. <code>/health</code> is exempt (<code>_STARTUP_EXEMPT</code>, main.py:1659) so liveness probing
+   still works before pairing.</li>
+</ol>
+<h2 id="route-map-for-a-remote-client">Route map for a remote client</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Gate</th>
+<th>Keyless</th>
+<th>With key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/health</code>, <code>/startup/progress</code></td>
+<td>exempt</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>generation, <code>/tts-stream</code>, <code>/audio/*</code></td>
+<td>none</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>gallery, cloning, <code>/export/record</code></td>
+<td><code>require_consumer</code></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>/api/settings/*</code> (analytics, performance-profile, hf-token, …)</td>
+<td><code>require_admin</code></td>
+<td><strong>403</strong></td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>/models/licenses/accept</code></td>
+<td><code>require_admin</code></td>
+<td><strong>403</strong></td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>/engines/*/select</code></td>
+<td><code>require_admin</code></td>
+<td><strong>403</strong></td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>/system/*</code> (diagnostics, logs, gpu-report)</td>
+<td><code>require_admin</code></td>
+<td><strong>403</strong></td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>POST /export</code>, <code>/export/reveal</code>, <code>/tools/probe</code></td>
+<td><code>require_native_access</code></td>
+<td><strong>never</strong></td>
+<td><strong>never</strong></td>
+</tr>
+<tr>
+<td><code>POST /engines/audiocpp/runtime/install</code></td>
+<td><code>require_desktop</code></td>
+<td><strong>never</strong></td>
+<td><strong>never</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The last two rows are the interesting ones. They are unreachable from <em>any</em>
+remote client, including one with a valid key, because they act on the backend
+host's filesystem. On a headless Colab VM they would target the wrong machine
+anyway. Saving audio to your PC does <strong>not</strong> use them: <code>saveExport</code> →
+<code>saveBackendFile</code> downloads over HTTPS in the app's main process and only then
+records history via <code>/export/record</code>.</p>
+<h2 id="how-the-desktop-app-authenticates">How the desktop app authenticates</h2>
+<p><code>electron/src/main/remote-backend.ts</code> → <code>probeRemoteBackend</code>:</p>
+<ol>
+<li><code>GET /health</code> — no headers. Confirms something real is there.</li>
+<li>If a master key was given: <code>POST /api/auth/session</code> with
+   <code>Authorization: Bearer &lt;key&gt;</code> and <code>{"transport":"bearer"}</code>.
+   Requires <strong>201</strong> and a token matching <code>ovs_admin_session_[A-Za-z0-9_-]{43}</code>.</li>
+<li><code>GET /system/info</code> with the session token.</li>
+</ol>
+<p>Then <code>backend.ts</code> keeps only the session:</p>
+<pre><code class="language-ts">private activeSession() {
+  if (this.remoteSession &amp;&amp; this.remoteSession.expiresAt &gt; Date.now()/1000) return this.remoteSession
+  this.remoteSession = null; return null      // expired: no automatic re-exchange
+}
+</code></pre>
+<p>So the app never re-authenticates on its own — one key paste per app restart.
+Sessions live in <code>services/admin_sessions.py</code> (in-memory, per-process pepper),
+so a backend restart invalidates them.</p>
+<p>The backend persists <strong>only</strong> the URL on disk. That is deliberate, and it is why
+this setup's launcher keeps the key separately and puts it on the clipboard.</p>
+<h2 id="models-and-quality-tiers">Models and quality tiers</h2>
+<p><code>electron/src/renderer/src/features/settings/performance-model-packs.ts</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Repos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fast</td>
+<td>OmniVoice, whisper-base, sherpa-tiny</td>
+</tr>
+<tr>
+<td>balanced</td>
+<td>OmniVoice, whisper-large-v3-turbo-ct2, sherpa-tiny, parakeet</td>
+</tr>
+<tr>
+<td>quality / <strong>max</strong></td>
+<td>OmniVoice, <strong>faster-whisper-large-v3</strong>, sherpa-tiny, parakeet, <strong>NLLB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Quality and Max download the same repos. The tier changes runtime policy
+(<code>services/performance_profiles.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Max policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TTS</td>
+<td>64 sampling steps + postprocess</td>
+</tr>
+<tr>
+<td>ASR</td>
+<td>8 beams</td>
+</tr>
+<tr>
+<td>Dictation</td>
+<td>beam search, 8 active paths</td>
+</tr>
+<tr>
+<td>Translation</td>
+<td>NLLB, 8 beams</td>
+</tr>
+<tr>
+<td>Diarisation</td>
+<td>pyannote</td>
+</tr>
+</tbody>
+</table>
+<p>Selecting a tier is <code>PUT /api/settings/performance-profile</code> — an admin write, so
+it is blocked keyless. Box 3 performs that write over loopback instead.</p>
+<p>Model installs are detected straight from the Hugging Face cache
+(<code>api/routers/setup/models.py</code>, <code>is_cached</code>), which is why downloading with
+<code>snapshot_download</code> on the VM is equivalent to clicking Install in the app.</p>
+<h2 id="licences">Licences</h2>
+<p>Each gated model needs an acceptance record bound to a fingerprint of its terms:</p>
+<pre><code>GET  /models/licenses/details/&lt;repo&gt;   → fingerprint &quot;v2:&lt;64 hex&gt;&quot;
+POST /models/licenses/accept           {repo_id, fingerprint, accepted}
+</code></pre>
+<p>Anything whose licence category is not <code>commercial</code> fails closed. Note the
+default TTS model: <code>k2-fsa/OmniVoice</code> is <strong>CC-BY-NC</strong>, commercial inference
+restricted.</p>
+<h2 id="diarisation-on-a-remote-backend">Diarisation on a remote backend</h2>
+<p><code>services/diarization_runtime.py</code> offers two engines:</p>
+<ul>
+<li><strong>pyannote</strong> — pure Python, works on Colab, needs the three gated repos plus a
+  Hugging Face token and <code>pyannote.audio</code>.</li>
+<li><strong>audiocpp Sortformer</strong> — needs a native runtime that ships <strong>only inside the
+  desktop installer</strong>. <code>engines/audiocpp/bootstrap.py</code> states outright:
+  <em>"VoiceStudio never downloads executable code for this engine."</em></li>
+</ul>
+<p>So pyannote is the only option remotely — which is also what Max tier asks for.</p>
+<h2 id="gpu-turbo">GPU Turbo</h2>
+<p><code>services/engine_env.py</code>:</p>
+<blockquote>
+<p><code>OMNIVOICE_FLASHINFER=1</code> patches the OmniVoice model with FlashInfer packed
+attention (~2× per upstream benchmarks); <code>graph</code> additionally captures CUDA
+graphs (best at batch=1).</p>
+</blockquote>
+<p>Requires <code>flashinfer-python</code> + <code>flashinfer-jit-cache</code> installed into the same
+interpreter that runs the backend. Off by default, and designed so it can never
+be a point of failure: if the package is missing or a kernel fails at runtime,
+the backend logs the reason and continues on the standard path.</p>
+<p>That is exactly how the notebook uses it — detect, enable, verify, and silently
+skip if unavailable.</p>
+<footer>Not affiliated with the VoiceStudio project &mdash; a third-party community setup for the
+AGPL-3.0 app by <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash</a>.
+Colab, free T4, Cloudflare tunnel.</footer></main></div></body></html>

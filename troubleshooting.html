@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Troubleshooting</title>
+<meta name="description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:title" content="Troubleshooting">
+<meta property="og:description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://nur-mohammad-duari.github.io/VoiceStudio-Colab-GPU/troubleshooting.html">
+<style>*{box-sizing:border-box}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2430;background:#fbfbfd}
+.wrap{display:flex;min-height:100vh}nav{width:250px;flex:0 0 250px;background:#12172a;padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .brand{color:#fff;font-weight:700;margin-bottom:6px}nav .tag{color:#8b93a7;font-size:12px;margin-bottom:22px}
+nav a{display:block;color:#c9d1e0;text-decoration:none;padding:8px 10px;border-radius:7px;font-size:14px;margin-bottom:2px}
+nav a:hover,nav a.on{background:#1e2537;color:#7cf0c8}nav .cta{display:block;margin-top:22px;background:#7cf0c8;color:#12172a;text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+main{flex:1;max-width:840px;padding:44px 40px 80px}
+h1{font-size:2.05rem;line-height:1.25;margin:0 0 6px}h2{font-size:1.3rem;margin:2.2em 0 .5em;padding-top:.5em;border-top:1px solid #e6e8ef}
+h3{font-size:1.05rem;margin:1.6em 0 .4em}p,li{color:#333a4d}code{background:#eef1f6;padding:2px 6px;border-radius:5px;font-size:.88em}
+pre{background:#12172a;color:#e4e8f2;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94em}th,td{border:1px solid #e2e5ec;padding:9px 11px;text-align:left}th{background:#f3f5f9}
+a{color:#1a6f5a}blockquote{border-left:3px solid #7cf0c8;margin:1em 0;padding:2px 16px;color:#4a5468;background:#f4f7f6}
+img{max-width:100%;border-radius:8px}hr{border:0;border-top:1px solid #e6e8ef;margin:2.4em 0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid #e6e8ef;color:#7b849a;font-size:.85rem}</style></head><body><div class="wrap">
+<nav><div class="brand">VoiceStudio<br>on Colab</div><div class="tag">Free GPU. Full features.</div>
+<a href="index.html" class="">Overview</a><a href="install.html" class="">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="on">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="">FAQ</a><a class="cta" href="https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU" target="_blank" rel="noopener">GitHub repo</a></nav>
+<main><h1 id="troubleshooting">Troubleshooting</h1>
+<p>Every message below is one that this setup actually produces. Find yours.</p>
+<hr />
+<h2 id="in-the-app">In the app</h2>
+<h3 id="something-went-wrong-a-toast-on-a-button">"Something went wrong" / a toast on a button</h3>
+<p>You are keyless. The app is talking to a backend whose key it does not hold, so
+admin writes are refused.</p>
+<p><strong>Fix:</strong> Settings → Sharing → Remote backend → paste the key → Test → Save.
+The launcher keeps it on the clipboard, so it is one Ctrl+V.</p>
+<h3 id="could-not-reach-the-configured-remote-backend-at">"Could not reach the configured remote backend at …"</h3>
+<p>The URL is wrong, stale, or Colab is gone. Verify from a terminal:</p>
+<pre><code class="language-sh">curl -s -m 12 &quot;$(python3 -c &quot;import json;print(json.load(open('/home/mint/.config/VoiceStudio/remote-backend.json'))['url'])&quot;)/health&quot;
+</code></pre>
+<p>Expect <code>{"status":"ok","device":"cuda (Tesla T4)",...}</code>. Empty output means the
+tunnel is dead → run box 2 in Colab and paste the new URL.</p>
+<h3 id="api-key-required-when-pasting-the-key">"API key required" when pasting the key</h3>
+<p>The URL and the key came from <strong>different Colab runs</strong>. Each run of box 2 prints
+a new URL <em>and</em> its key together; copy both from the same output.</p>
+<h3 id="everything-is-403-even-after-pasting-the-key">Everything is 403 even after pasting the key</h3>
+<p>Check that the backend actually has a key configured:</p>
+<pre><code class="language-sh">U=$(python3 -c &quot;import json;print(json.load(open('/home/mint/.config/VoiceStudio/remote-backend.json'))['url'].rstrip('/'))&quot;)
+curl -s -X POST -H &quot;Authorization: Bearer $(tr -d '[:space:]' &lt; ~/.config/VoiceStudio/remote-key.txt)&quot; \
+     -H 'Content-Type: application/json' -d '{&quot;transport&quot;:&quot;bearer&quot;}' &quot;$U/api/auth/session&quot;
+</code></pre>
+<p><code>{"token":"ovs_admin_session_…"}</code> means the key is good. If you get
+<code>{"detail":"API key required"}</code>, the PC's saved key no longer matches the running
+backend — copy the key box 2 printed.</p>
+<h3 id="models-show-still-needed-even-though-box-3-finished">Models show "Still needed" even though box 3 finished</h3>
+<p>The catalogue reads the Hugging Face cache. Re-run box 3 (it is safe and cached),
+then click <strong>Retry</strong> in the app. Confirm on the VM:</p>
+<pre><code class="language-python">from huggingface_hub import scan_cache_dir
+print({r.repo_id: round(r.size_on_disk/1e9, 2) for r in scan_cache_dir().repos})
+</code></pre>
+<h3 id="dubbing-fails-with-a-licence-or-model-error">Dubbing fails with a licence or model error</h3>
+<p>Speaker separation is not installed. Run box 5 (needs your Hugging Face read
+token and the two pyannote repos accepted).</p>
+<hr />
+<h2 id="in-colab">In Colab</h2>
+<h3 id="box-2-backend-did-not-come-up">Box 2: <code>Backend did not come up</code></h3>
+<pre><code class="language-sh">!tail -40 /content/omnivoice_backend.log
+</code></pre>
+<p>Usually a truncated model download or a missing dependency — re-run box 1.</p>
+<h3 id="box-2-the-app-is-not-installed-in-this-vm-yet-run-box-1-first">Box 2: <code>The app is not installed in this VM yet. Run box 1 first.</code></h3>
+<p>Exactly what it says. <code>/content</code> was wiped; run box 1, then box 2.</p>
+<h3 id="box-2-cloudflared-started-but-never-handed-out-a-link">Box 2: <code>cloudflared started but never handed out a link</code></h3>
+<p>A transient Colab/network hiccup. Re-run box 2 in a minute.</p>
+<h3 id="box-2-the-public-link-did-not-answer-http-503">Box 2: <code>The public link did not answer: HTTP 503</code></h3>
+<p>The tunnel is up but the backend is still booting. Re-run box 2.</p>
+<h3 id="box-2-could-not-download-cloudflared-github-download-blocked">Box 2: <code>Could not download cloudflared (GitHub download blocked?)</code></h3>
+<p>The binary download failed twice. Re-run, or open a fresh Colab tab — Colab's
+egress to GitHub release assets is flaky.</p>
+<h3 id="health-says-cannot-reach-it-connection-refused">Health says <code>cannot reach it (Connection refused)</code></h3>
+<p>The tunnel exists but nothing is listening on the VM. Re-run box 2.</p>
+<h3 id="models-downloaded-but-load-is-very-slow">Models downloaded but load is very slow</h3>
+<p>Expected if they live on Google Drive: FUSE is slower than local disk. Set
+<code>PERSIST_TO_GOOGLE_DRIVE = False</code> in box 1 to keep models local and accept
+re-downloading after a VM reset.</p>
+<h3 id="gpu-turbo-not-available"><code>GPU Turbo not available (...)</code></h3>
+<p>Non-fatal. FlashInfer has no wheel for this CUDA build (common on the free T4's
+sm75 architecture). Everything else still works, just without the ~2× kernel
+speedup.</p>
+<hr />
+<h2 id="performance">Performance</h2>
+<h3 id="gpu-shows-4-gb-of-15-gb-used">GPU shows 4 GB of 15 GB used</h3>
+<p>Normal, not a problem. The TTS model is ~2.4 GB; the rest is CUDA workbuffers.
+Unallocated VRAM does not make anything faster — kernels do. Enable GPU Turbo for
+the real win.</p>
+<h3 id="max-tier-is-slow">Max tier is slow</h3>
+<p>Correct behaviour: 64 sampling steps plus postprocess is the slowest, best
+quality setting. Drop to Balanced for speed if you prefer.</p>
+<h3 id="first-generation-after-a-restart-takes-minutes">First generation after a restart takes minutes</h3>
+<p>FlashInfer compiles kernels on first use. The prebuilt <code>flashinfer-jit-cache</code>
+reduces this, but some compile time is expected. After that, generations are
+roughly twice as fast.</p>
+<hr />
+<h2 id="the-launcher">The launcher</h2>
+<h3 id="it-never-asks-for-my-key">It never asks for my key</h3>
+<p>By design: it only asks when the backend actually rejects the saved one.</p>
+<h3 id="it-says-the-key-was-rejected">It says the key was rejected</h3>
+<p>URL and key from different Colab runs. Copy both from the same box-2 output.</p>
+<h3 id="the-window-is-blank-or-the-app-crashes">The window is blank or the app crashes</h3>
+<p>Your machine needs software rendering. The launcher passes <code>--disable-gpu</code>; make
+sure you start the app through the icon or the launcher, not the raw AppImage.</p>
+<hr />
+<h2 id="last-resort">Last resort</h2>
+<pre><code class="language-sh"># Wipe the pairing and start clean
+rm -f ~/.config/VoiceStudio/remote-backend.json ~/.config/VoiceStudio/remote-key.txt
+</code></pre>
+<p>Then re-run box 2 in Colab and pair again.</p>
+<footer>Not affiliated with the VoiceStudio project &mdash; a third-party community setup for the
+AGPL-3.0 app by <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash</a>.
+Colab, free T4, Cloudflare tunnel.</footer></main></div></body></html>

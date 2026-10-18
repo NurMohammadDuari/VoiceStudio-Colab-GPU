@@ -1,0 +1,20 @@
+# Never commit credentials or machine state
+*.key
+*.token
+remote-key.txt
+remote-backend.json
+omnivoice_api_key.txt
+last_tunnel_url.txt
+cloudflared.log
+omnivoice_backend.log
+.env
+
+# Python / Jupyter noise
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+
+# Editors / OS
+.DS_Store
+*.swp

@@ -1,0 +1,152 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Installation - VoiceStudio on Colab</title>
+<meta name="description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:title" content="Installation - VoiceStudio on Colab">
+<meta property="og:description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://nur-mohammad-duari.github.io/VoiceStudio-Colab-GPU/install.html">
+<style>*{box-sizing:border-box}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2430;background:#fbfbfd}
+.wrap{display:flex;min-height:100vh}nav{width:250px;flex:0 0 250px;background:#12172a;padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .brand{color:#fff;font-weight:700;margin-bottom:6px}nav .tag{color:#8b93a7;font-size:12px;margin-bottom:22px}
+nav a{display:block;color:#c9d1e0;text-decoration:none;padding:8px 10px;border-radius:7px;font-size:14px;margin-bottom:2px}
+nav a:hover,nav a.on{background:#1e2537;color:#7cf0c8}nav .cta{display:block;margin-top:22px;background:#7cf0c8;color:#12172a;text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+main{flex:1;max-width:840px;padding:44px 40px 80px}
+h1{font-size:2.05rem;line-height:1.25;margin:0 0 6px}h2{font-size:1.3rem;margin:2.2em 0 .5em;padding-top:.5em;border-top:1px solid #e6e8ef}
+h3{font-size:1.05rem;margin:1.6em 0 .4em}p,li{color:#333a4d}code{background:#eef1f6;padding:2px 6px;border-radius:5px;font-size:.88em}
+pre{background:#12172a;color:#e4e8f2;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94em}th,td{border:1px solid #e2e5ec;padding:9px 11px;text-align:left}th{background:#f3f5f9}
+a{color:#1a6f5a}blockquote{border-left:3px solid #7cf0c8;margin:1em 0;padding:2px 16px;color:#4a5468;background:#f4f7f6}
+img{max-width:100%;border-radius:8px}hr{border:0;border-top:1px solid #e6e8ef;margin:2.4em 0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid #e6e8ef;color:#7b849a;font-size:.85rem}</style></head><body><div class="wrap">
+<nav><div class="brand">VoiceStudio<br>on Colab</div><div class="tag">Free GPU. Full features.</div>
+<a href="index.html" class="">Overview</a><a href="install.html" class="on">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="">FAQ</a><a class="cta" href="https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU" target="_blank" rel="noopener">GitHub repo</a></nav>
+<main><h1 id="installation">Installation</h1>
+<p>Everything below assumes you have a Google account (for Colab) and a PC with
+the VoiceStudio desktop app installed. No Python, no GPU, no CUDA on the PC.</p>
+<hr />
+<h2 id="part-1-the-pc-once">Part 1 — the PC (once)</h2>
+<h3 id="1-install-the-desktop-app">1. Install the desktop app</h3>
+<pre><code class="language-sh">curl -fsSL https://voicestudio.sh/install | sh
+</code></pre>
+<p>This installs an AppImage to <code>~/.local/bin/VoiceStudio</code>.</p>
+<p>On some machines (older Intel/AMD GPUs on X11) the UI needs software rendering.
+If the window is blank or crashes, always launch it through the launcher in
+Part 2 — it passes <code>--disable-gpu</code> for you.</p>
+<h3 id="2-install-the-launcher">2. Install the launcher</h3>
+<pre><code class="language-sh">./scripts/install-launcher.sh
+</code></pre>
+<p>This copies the launcher to <code>~/.local/bin/voicestudio-remote</code>, creates the icon
+and the <code>.desktop</code> entry, and installs the app icon. Re-run it any time you
+update the launcher.</p>
+<p>Check it worked:</p>
+<pre><code class="language-sh">. ~/.local/share/applications/voicestudio-remote.desktop   # no, just verify:
+ls -l ~/.local/bin/voicestudio-remote ~/Desktop/VoiceStudio.desktop
+</code></pre>
+<hr />
+<h2 id="part-2-colab-first-run">Part 2 — Colab (first run)</h2>
+<ol>
+<li>Open <a href="../notebook/VoiceStudio-Colab-GPU.ipynb">VoiceStudio-Colab-GPU.ipynb</a>
+   in Google Colab.</li>
+<li><strong>Runtime → Change runtime type → T4 GPU.</strong> Confirm it says GPU.</li>
+<li><strong>Runtime → Run all</strong> (or run boxes 1, 2, 3 in order).</li>
+<li>Wait. First run downloads the app, ffmpeg, the engine stack and roughly 5 GB
+   of models. Ten to twenty minutes is normal.</li>
+</ol>
+<h3 id="the-boxes">The boxes</h3>
+<table>
+<thead>
+<tr>
+<th>Box</th>
+<th>What it does</th>
+<th>When to run</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Installs the app on the VM, mounts Google Drive, optionally installs GPU Turbo</td>
+<td>once per VM</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Starts the backend, opens the public tunnel, prints <strong>URL + API key</strong></td>
+<td>every time Colab restarts</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Downloads models, accepts licences, sets privacy, activates Max quality</td>
+<td>once per VM</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Reprints the URL and key</td>
+<td>any time you lose them</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Optional: dubbing pack (speaker separation)</td>
+<td>once, if you want dubbing</td>
+</tr>
+</tbody>
+</table>
+<h3 id="watch-for-these-lines">Watch for these lines</h3>
+<p>Box 2 ends with:</p>
+<pre><code>Backend ready: {'status': 'ok', 'device': 'cuda (Tesla T4)', ...}
+Public link verified end to end.
+==================================================================
+URL:
+https://three-random-words-here.trycloudflare.com
+
+API KEY:
+&lt;43 characters&gt;
+</code></pre>
+<p>That <code>Public link verified end to end.</code> line means the box proved the key works
+through the public tunnel, using the same handshake your PC app uses. If it
+prints, the pairing will work.</p>
+<hr />
+<h2 id="part-3-pair-the-pc">Part 3 — pair the PC</h2>
+<ol>
+<li>Double-click the <strong>VoiceStudio</strong> icon on your desktop.</li>
+<li>Paste the <strong>URL</strong>.</li>
+<li>Paste the <strong>API key</strong> — the launcher put it on your clipboard (Ctrl+V).</li>
+<li>In the app: <strong>Settings → Sharing → Remote backend</strong>, paste the key,
+   <strong>Test</strong>, then <strong>Save &amp; reload</strong>.</li>
+</ol>
+<p>The app stores only the URL on disk; the key lives in the app's memory for this
+session and is exchanged for a short-lived session token. That is by design —
+so after each app restart you repeat step 3-4 once (the key is on your clipboard,
+so it is one Ctrl+V).</p>
+<h3 id="when-the-launcher-asks-for-the-key">When the launcher asks for the key</h3>
+<p>It only asks when your saved key is <strong>rejected by the backend</strong>. It verifies
+with a real key exchange first. If it asks, the usual cause is a URL and a key
+copied from two different Colab runs — copy both from the same output.</p>
+<hr />
+<h2 id="part-4-optional-dubbing">Part 4 — optional: dubbing</h2>
+<p>Dubbing needs speaker separation. On a remote backend the only viable engine is
+pyannote (the Sortformer alternative needs a native runtime that ships only with
+the desktop installer). That needs a Hugging Face account, once:</p>
+<ol>
+<li>Log in at <a href="https://huggingface.co">huggingface.co</a>.</li>
+<li>Open <a href="https://huggingface.co/pyannote/speaker-diarization-3.1">pyannote/speaker-diarization-3.1</a>
+   and click <strong>Agree and access repository</strong>.</li>
+<li>Do the same on <a href="https://huggingface.co/pyannote/segmentation-3.0">pyannote/segmentation-3.0</a>.</li>
+<li>Create a <strong>read</strong> token at <a href="https://huggingface.co/settings/tokens">huggingface.co/settings/tokens</a>.</li>
+<li>Paste it into box 5 and run it.</li>
+</ol>
+<hr />
+<h2 id="daily-use">Daily use</h2>
+<p>Keep the Colab tab open. Box 2 prints a keep-alive heartbeat every two minutes;
+that reduces disconnects but cannot beat Colab's hard limits.</p>
+<p>When it dies: run box 2, paste the new URL, done. The key does not change.</p>
+<h2 id="performance">Performance</h2>
+<p>Box 1 installs <strong>GPU Turbo</strong> (FlashInfer CUDA graphs) by default. The first
+generation after a restart compiles kernels and can take minutes; after that,
+generations are roughly twice as fast. Set <code>INSTALL_GPU_TURBO = False</code> at the
+top of box 1 to skip it.</p>
+<p>VRAM sitting at 4 GB of 15 GB is normal and not a problem — the model is ~2.4 GB
+and unallocated VRAM does not make anything faster. See
+<a href="FAQ.md#why-is-gpu-usage-so-low">FAQ.md</a>.</p>
+<footer>Not affiliated with the VoiceStudio project &mdash; a third-party community setup for the
+AGPL-3.0 app by <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash</a>.
+Colab, free T4, Cloudflare tunnel.</footer></main></div></body></html>

@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security</title>
+<meta name="description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:title" content="Security">
+<meta property="og:description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://nur-mohammad-duari.github.io/VoiceStudio-Colab-GPU/security.html">
+<style>*{box-sizing:border-box}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2430;background:#fbfbfd}
+.wrap{display:flex;min-height:100vh}nav{width:250px;flex:0 0 250px;background:#12172a;padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .brand{color:#fff;font-weight:700;margin-bottom:6px}nav .tag{color:#8b93a7;font-size:12px;margin-bottom:22px}
+nav a{display:block;color:#c9d1e0;text-decoration:none;padding:8px 10px;border-radius:7px;font-size:14px;margin-bottom:2px}
+nav a:hover,nav a.on{background:#1e2537;color:#7cf0c8}nav .cta{display:block;margin-top:22px;background:#7cf0c8;color:#12172a;text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+main{flex:1;max-width:840px;padding:44px 40px 80px}
+h1{font-size:2.05rem;line-height:1.25;margin:0 0 6px}h2{font-size:1.3rem;margin:2.2em 0 .5em;padding-top:.5em;border-top:1px solid #e6e8ef}
+h3{font-size:1.05rem;margin:1.6em 0 .4em}p,li{color:#333a4d}code{background:#eef1f6;padding:2px 6px;border-radius:5px;font-size:.88em}
+pre{background:#12172a;color:#e4e8f2;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94em}th,td{border:1px solid #e2e5ec;padding:9px 11px;text-align:left}th{background:#f3f5f9}
+a{color:#1a6f5a}blockquote{border-left:3px solid #7cf0c8;margin:1em 0;padding:2px 16px;color:#4a5468;background:#f4f7f6}
+img{max-width:100%;border-radius:8px}hr{border:0;border-top:1px solid #e6e8ef;margin:2.4em 0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid #e6e8ef;color:#7b849a;font-size:.85rem}</style></head><body><div class="wrap">
+<nav><div class="brand">VoiceStudio<br>on Colab</div><div class="tag">Free GPU. Full features.</div>
+<a href="index.html" class="">Overview</a><a href="install.html" class="">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="on">Security</a><a href="faq.html" class="">FAQ</a><a class="cta" href="https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU" target="_blank" rel="noopener">GitHub repo</a></nav>
+<main><h1 id="security">Security</h1>
+<p>What this setup protects, what it doesn't, and what to do about the rest.</p>
+<hr />
+<h2 id="the-threat-model">The threat model</h2>
+<p>Your backend is exposed on the public internet by a Cloudflare quick tunnel with
+a random hostname. Your PC is the only legitimate client. So the question is:
+<strong>what stops someone else from using it?</strong></p>
+<p>Two independent secrets, both required:</p>
+<ol>
+<li><strong>The random hostname.</strong> A quick-tunnel URL is unguessable and not indexed.</li>
+<li><strong>The API key.</strong> 43 characters from <code>secrets.token_urlsafe</code>, compared in
+   constant time, never logged.</li>
+</ol>
+<p>An attacker needs both. Finding the hostname by guessing is infeasible; leaking
+the key is the realistic failure mode.</p>
+<h2 id="how-the-key-travels">How the key travels</h2>
+<pre><code>Colab box 2 prints it  →  you copy it  →  launcher stores it (0600)
+                                           and puts it on the clipboard
+                                        →  app sends it once, over HTTPS,
+                                           to POST /api/auth/session
+</code></pre>
+<ul>
+<li>It is sent over TLS (trycloudflare is HTTPS).</li>
+<li>It is <strong>not</strong> placed in the URL, so it stays out of logs and shell history.</li>
+<li>It is stored at <code>~/.config/VoiceStudio/remote-key.txt</code>, mode <code>0600</code>.</li>
+<li>It is also stored on Google Drive so it survives VM resets — treat that Drive
+  file as a secret too.</li>
+<li>The app itself persists only the URL. The key stays in memory for the session.</li>
+</ul>
+<h2 id="what-the-key-unlocks">What the key unlocks</h2>
+<p>Admin-tier routes: settings, model installs, engine selection, diagnostics,
+licence acceptance. Without it you get consumption only (generate, clone,
+transcribe, dub, download) — which is a sane degraded mode, not a broken one.</p>
+<h2 id="what-it-deliberately-cannot-unlock">What it deliberately cannot unlock</h2>
+<p>Routes that act on the backend host's filesystem
+(<code>require_native_access</code>, <code>require_desktop</code>) stay true-loopback-only, for <strong>any</strong>
+remote client, key or not. On a headless VM they would target the wrong machine
+anyway. Saving audio to your PC does not use them.</p>
+<h2 id="why-the-tunnel-forwards-your-ip">Why the tunnel forwards your IP</h2>
+<p><code>cloudflared</code> sends <code>X-Forwarded-For</code>, and uvicorn trusts it from loopback. That
+is deliberate: it means the backend correctly sees your PC as a remote client and
+enforces the gates. Without it every request would look local and the security
+model would silently collapse.</p>
+<h2 id="residual-risks-honestly">Residual risks, honestly</h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Clipboard leak</strong> — the key sits on your clipboard, and other apps can read it</td>
+<td>Clear the clipboard after pairing; it is a 9-hour credential only after the exchange</td>
+</tr>
+<tr>
+<td><strong>Shared computer</strong> — anyone using your PC can read <code>remote-key.txt</code></td>
+<td><code>chmod 600</code>, and that user can use the backend while the key is valid</td>
+</tr>
+<tr>
+<td><strong>Colab VM is Google's</strong> — you are running code on someone else's machine</td>
+<td>Your audio and models live there while it runs; Drive holds the rest</td>
+</tr>
+<tr>
+<td><strong>Long-lived key on Drive</strong> — Drive is synced to a Google account</td>
+<td>Rotate by deleting <code>/content/drive/omnivoice/api_key.txt</code> and re-running box 2</td>
+</tr>
+<tr>
+<td><strong>No rate limiting on the tunnel</strong></td>
+<td>Upstream does throttle failed key exchanges per client</td>
+</tr>
+</tbody>
+</table>
+<h2 id="hardening-if-you-want-it">Hardening, if you want it</h2>
+<ul>
+<li><strong>Clear the clipboard</strong> after pairing:
+  <code>sh
+  printf '' | xclip -selection clipboard</code></li>
+<li><strong>Rotate the key</strong> whenever you think it leaked:
+  <code>sh
+  # on Colab
+  !rm -f /content/drive/omnivoice/api_key.txt</code>
+  then re-run box 2 and re-pair. Your PC's saved key stops working immediately,
+  which is the point.</li>
+<li><strong>Delete Drive contents</strong> when finished: models, settings, cloned voices and
+  the key are all under <code>/content/drive/omnivoice</code>.</li>
+<li><strong>Stop the tunnel</strong> when done: killing the Colab tab or running
+  <code>!pkill -x cloudflared</code> closes the public entry point.</li>
+</ul>
+<h2 id="responsible-use">Responsible use</h2>
+<p>Voice cloning is powerful. Clone only voices you have the right to clone, and do
+not clone anyone to deceive them. The default model is CC-BY-NC — see
+<a href="FAQ.md#can-i-sell-this">FAQ.md</a>.</p>
+<footer>Not affiliated with the VoiceStudio project &mdash; a third-party community setup for the
+AGPL-3.0 app by <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash</a>.
+Colab, free T4, Cloudflare tunnel.</footer></main></div></body></html>

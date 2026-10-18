@@ -1,0 +1,318 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VoiceStudio on Colab - free GPU, full features</title>
+<meta name="description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:title" content="VoiceStudio on Colab - free GPU, full features">
+<meta property="og:description" content="Run the AGPL-3.0 open-source VoiceStudio app (voice cloning, video dubbing, TTS) entirely on a free Google Colab T4 GPU. Your PC only shows the UI.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://nur-mohammad-duari.github.io/VoiceStudio-Colab-GPU/index.html">
+<style>*{box-sizing:border-box}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2430;background:#fbfbfd}
+.wrap{display:flex;min-height:100vh}nav{width:250px;flex:0 0 250px;background:#12172a;padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .brand{color:#fff;font-weight:700;margin-bottom:6px}nav .tag{color:#8b93a7;font-size:12px;margin-bottom:22px}
+nav a{display:block;color:#c9d1e0;text-decoration:none;padding:8px 10px;border-radius:7px;font-size:14px;margin-bottom:2px}
+nav a:hover,nav a.on{background:#1e2537;color:#7cf0c8}nav .cta{display:block;margin-top:22px;background:#7cf0c8;color:#12172a;text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+main{flex:1;max-width:840px;padding:44px 40px 80px}
+h1{font-size:2.05rem;line-height:1.25;margin:0 0 6px}h2{font-size:1.3rem;margin:2.2em 0 .5em;padding-top:.5em;border-top:1px solid #e6e8ef}
+h3{font-size:1.05rem;margin:1.6em 0 .4em}p,li{color:#333a4d}code{background:#eef1f6;padding:2px 6px;border-radius:5px;font-size:.88em}
+pre{background:#12172a;color:#e4e8f2;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94em}th,td{border:1px solid #e2e5ec;padding:9px 11px;text-align:left}th{background:#f3f5f9}
+a{color:#1a6f5a}blockquote{border-left:3px solid #7cf0c8;margin:1em 0;padding:2px 16px;color:#4a5468;background:#f4f7f6}
+img{max-width:100%;border-radius:8px}hr{border:0;border-top:1px solid #e6e8ef;margin:2.4em 0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid #e6e8ef;color:#7b849a;font-size:.85rem}</style></head><body><div class="wrap">
+<nav><div class="brand">VoiceStudio<br>on Colab</div><div class="tag">Free GPU. Full features.</div>
+<a href="index.html" class="on">Overview</a><a href="install.html" class="">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="">FAQ</a><a class="cta" href="https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU" target="_blank" rel="noopener">GitHub repo</a></nav>
+<main><div align="center">
+
+# VoiceStudio on Colab: free GPU, full features
+
+### Run the open-source ElevenLabs alternative on a free Colab T4. Your PC only shows the UI.
+
+[![Stars](https://img.shields.io/github/stars/NurMohammadDuari/VoiceStudio-Colab-GPU?style=social)](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU)
+[![Forks](https://img.shields.io/github/forks/NurMohammadDuari/VoiceStudio-Colab-GPU?style=social)](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/network/members)
+[![Watchers](https://img.shields.io/github/watchers/NurMohammadDuari/VoiceStudio-Colab-GPU?style=social)](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/watchers)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/NurMohammadDuari/VoiceStudio-Colab-GPU)](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/commits/main)
+[![Notebook](https://img.shields.io/badge/notebook-Open%20in%20Colab-FBA40F5?style=social&logo=google-colab)](https://colab.research.google.com/)[![CI](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/actions/workflows/validate.yml/badge.svg)](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/actions/workflows/validate.yml)[![Release](https://img.shields.io/github/v/release/NurMohammadDuari/VoiceStudio-Colab-GPU?label=release&color=blue)](https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/releases)
+
+**VoiceStudio + Colab + free GPU = professional AI voice studio at zero cost.**
+Voice cloning, video dubbing, text-to-speech, transcription, dictation and
+audiobooks — running on a **free Google Colab T4 GPU**, while your computer does
+nothing but show the interface.
+
+</div>
+
+<hr />
+<h2 id="why-this-exists">Why this exists</h2>
+<p><a href="https://github.com/debpalash/VoiceStudio">VoiceStudio</a> is a free, AGPL-3.0,
+open-source AI voice studio — a genuine <strong>ElevenLabs alternative</strong> with voice
+cloning, video dubbing and 646 languages. It is #1 on GitHub Trending with 50k+
+stars.</p>
+<p>The catch: it assumes your PC has a GPU. <strong>This repo removes that requirement.</strong>
+You get a free T4 from Google Colab, and the desktop app connects to it.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>ElevenLabs Cloud</th>
+<th>VoiceStudio Pro</th>
+<th><strong>This repo</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cost</td>
+<td>from $6/mo</td>
+<td>$99/yr</td>
+<td><strong>Free</strong></td>
+</tr>
+<tr>
+<td>GPU needed</td>
+<td>none</td>
+<td>yes, yours</td>
+<td><strong>none — free Colab T4</strong></td>
+</tr>
+<tr>
+<td>Voice cloning</td>
+<td>yes</td>
+<td>yes</td>
+<td><strong>yes</strong></td>
+</tr>
+<tr>
+<td>Video dubbing</td>
+<td>yes</td>
+<td>yes</td>
+<td><strong>yes</strong></td>
+</tr>
+<tr>
+<td>Languages</td>
+<td>74 on paid</td>
+<td>646</td>
+<td><strong>646</strong></td>
+</tr>
+<tr>
+<td>Your audio</td>
+<td>uploaded</td>
+<td>stays local</td>
+<td><strong>stays local</strong></td>
+</tr>
+<tr>
+<td>Source code</td>
+<td>closed</td>
+<td>closed</td>
+<td><strong>open (AGPL-3.0)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>That middle column is the point: VoiceStudio's own paid <strong>Pro</strong> plan sells
+"remote GPU workers" and "multiple devices". This does the same thing, free.</p>
+<hr />
+<h2 id="screenshots">Screenshots</h2>
+<p>The real app, running on a free Colab T4 — your PC shows this, the GPU is
+somewhere else entirely.</p>
+<table>
+<tr>
+  <td width="50%"><img src="assets/screenshots/clone.webp" alt="Voice cloning screen"><br><sub><b>Voice cloning</b> — clone a voice from 3 seconds</sub></td>
+  <td width="50%"><img src="assets/screenshots/dub.webp" alt="Video dubbing timeline"><br><sub><b>Video dubbing</b> — per-speaker transcript and language columns</sub></td>
+</tr>
+<tr>
+  <td><img src="assets/screenshots/studio.webp" alt="Studio workspace"><br><sub><b>Studio</b> — script, style controls, synthesize</sub></td>
+  <td><img src="assets/screenshots/gallery.webp" alt="Voice gallery"><br><sub><b>Voice gallery</b> — ready-made voices with previews</sub></td>
+</tr>
+<tr>
+  <td><img src="assets/screenshots/engines.webp" alt="Model catalogue"><br><sub><b>Model catalogue</b> — every model with status and install actions</sub></td>
+  <td><img src="assets/screenshots/launchpad.webp" alt="Launchpad home"><br><sub><b>Launchpad</b> — one screen for every workflow</sub></td>
+</tr>
+</table>
+
+<p><sub>Screenshots of
+<a href="https://github.com/debpalash/VoiceStudio">debpalash/VoiceStudio</a>, the AGPL-3.0
+app this repo configures.</sub></p>
+<hr />
+<h2 id="quick-start-3-steps">Quick start (3 steps)</h2>
+<ol>
+<li><strong>Open the notebook</strong> →
+   <a href="notebook/VoiceStudio-Colab-GPU.ipynb"><code>notebook/VoiceStudio-Colab-GPU.ipynb</code></a>
+   in <a href="https://colab.research.google.com/">Google Colab</a>.</li>
+<li><strong>Runtime → Change runtime type → T4 GPU</strong>, then <strong>Runtime → Run all</strong>.</li>
+<li>Scroll to the end: it prints a <strong>URL</strong> and an <strong>API key</strong>. On your PC run
+   <code>./scripts/install-launcher.sh</code>, double-click the <strong>VoiceStudio</strong> icon, and
+   paste both.</li>
+</ol>
+<p>Full walkthrough: <strong><a href="docs/INSTALL.md">docs/INSTALL.md</a></strong></p>
+<hr />
+<h2 id="what-you-get">What you get</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🎙️ <strong>Voice cloning</strong> — clone a voice from 3 seconds of audio</td>
+<td>works (OmniVoice)</td>
+</tr>
+<tr>
+<td>🎨 <strong>Voice design</strong> — describe a voice, get it</td>
+<td>works</td>
+</tr>
+<tr>
+<td>🎬 <strong>Video dubbing</strong> — any video, any language, same timing</td>
+<td>works (optional speaker-diarisation box)</td>
+</tr>
+<tr>
+<td>📝 <strong>Text-to-speech / TTS</strong> at Max quality (64 steps)</td>
+<td>works</td>
+</tr>
+<tr>
+<td>🎧 <strong>Dictation &amp; transcription</strong></td>
+<td>works (faster-whisper large-v3)</td>
+</tr>
+<tr>
+<td>🌍 <strong>Translation in 646 languages</strong></td>
+<td>works (NLLB)</td>
+</tr>
+<tr>
+<td>📚 <strong>Audiobooks &amp; Stories</strong></td>
+<td>works</td>
+</tr>
+<tr>
+<td>🧩 <strong>Local API (OpenAI-compatible) + MCP server</strong></td>
+<td>works</td>
+</tr>
+<tr>
+<td>⚡ <strong>GPU Turbo</strong> — FlashInfer CUDA graphs, ~2× faster</td>
+<td>on by default</td>
+</tr>
+<tr>
+<td>🔓 <strong>Every settings panel, model install, engine switch</strong></td>
+<td>unlocked by the API key</td>
+</tr>
+<tr>
+<td>💾 <strong>Save audio/video to your PC</strong></td>
+<td>works (direct HTTPS download)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="how-it-works">How it works</h2>
+<pre><code>   YOUR PC                      COLAB (free T4)              PUBLIC
+┌──────────────┐   HTTPS   ┌────────────────────┐
+│ VoiceStudio  │───────────▶│  backend :3900     │
+│  (UI only)   │◀───────────│  OmniVoice + Whisper│
+│              │            │  + NLLB + pyannote  │
+└──────────────┘            └─────────┬──────────┘
+                                      │ 127.0.0.1
+                                      ▼
+                        cloudflared quick tunnel
+                     (random *.trycloudflare.com URL)
+</code></pre>
+<p>Deep dive: <strong><a href="docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a></strong></p>
+<hr />
+<h2 id="use-cases">Use cases</h2>
+<ul>
+<li><strong>Dubbing videos</strong> into other languages on a budget</li>
+<li><strong>Audiobooks</strong> from a text file, on a GPU you don't own</li>
+<li><strong>Voice cloning</strong> for narration, prototypes and accessibility</li>
+<li><strong>Transcribing</strong> meetings, lectures and interviews</li>
+<li><strong>Learning</strong> the ElevenLabs API on your own hardware, for free</li>
+<li><strong>Trying GPU text-to-speech</strong> before renting an actual GPU</li>
+</ul>
+<hr />
+<h2 id="when-colab-restarts">When Colab restarts</h2>
+<p>Colab recycles its VM — that is normal.</p>
+<table>
+<thead>
+<tr>
+<th>What happened</th>
+<th>What to run</th>
+<th>Re-paste</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tab reconnected, kernel restarted</td>
+<td>box 2</td>
+<td>new URL (key unchanged)</td>
+</tr>
+<tr>
+<td>Fresh VM (<code>/content</code> wiped)</td>
+<td>box 1 → box 2</td>
+<td>new URL (key unchanged)</td>
+</tr>
+<tr>
+<td>Lost the URL/key</td>
+<td>box 4</td>
+<td>reprint</td>
+</tr>
+</tbody>
+</table>
+<p>Models, settings, cloned voices <strong>and your API key</strong> persist to Google Drive, so
+a reset no longer means a 5 GB re-download.</p>
+<hr />
+<h2 id="documentation">Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>What's inside</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📖 <a href="docs/INSTALL.md">INSTALL.md</a></td>
+<td>Step-by-step setup for first run and every run after</td>
+</tr>
+<tr>
+<td>🏗 <a href="docs/ARCHITECTURE.md">ARCHITECTURE.md</a></td>
+<td>Components, environment variables, the key handshake</td>
+</tr>
+<tr>
+<td>🔍 <a href="docs/HOW-IT-WORKS-IN-THE-APP.md">HOW-IT-WORKS-IN-THE-APP.md</a></td>
+<td>Source analysis: security gates, routes, tiers, licences</td>
+</tr>
+<tr>
+<td>🛟 <a href="docs/TROUBLESHOOTING.md">TROUBLESHOOTING.md</a></td>
+<td>Every error message → what it means → how to fix it</td>
+</tr>
+<tr>
+<td>🔒 <a href="docs/SECURITY.md">SECURITY.md</a></td>
+<td>Threat model, key handling, residual risks</td>
+</tr>
+<tr>
+<td>❓ <a href="docs/FAQ.md">FAQ.md</a></td>
+<td>Cost, privacy, speed, commercial use</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="honest-limits">Honest limits</h2>
+<ul>
+<li><strong>Colab caps GPU hours</strong> and disconnects idle tabs. Nothing fixes that from
+  outside — for 24/7, rent a GPU box (RunPod, Vast.ai); nothing else changes.</li>
+<li><strong>The free T4 is Turing (sm75)</strong>, so GPU Turbo may not be available there. The
+  notebook detects this and continues without it.</li>
+<li><strong>The default model is CC-BY-NC</strong> — personal and research use, not resale.</li>
+<li>A few buttons stay disabled: they act on the <em>backend host's</em> filesystem,
+  which can never be your PC over a tunnel. Saving audio is unaffected.</li>
+</ul>
+<hr />
+<h2 id="contributing">Contributing</h2>
+<p>Issues and pull requests are welcome — see <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.
+Especially useful: reports of which platforms/CUDA builds work, and
+translations of the docs.</p>
+<p>If this saved you money, a ⭐ <strong>star</strong> helps other people find it.</p>
+<h2 id="license">License</h2>
+<p>AGPL-3.0 — matching the <a href="https://github.com/debpalash/VoiceStudio">VoiceStudio</a>
+app it configures. This repository contains only a notebook, a launcher and
+documentation; the application itself is not vendored here.</p>
+<h2 id="related">Related</h2>
+<ul>
+<li><a href="https://github.com/debpalash/VoiceStudio">debpalash/VoiceStudio</a> — the app</li>
+<li><a href="https://voicestudio.sh/pro">VoiceStudio Pro</a> / <a href="https://voicestudio.sh/cloud">Cloud</a></li>
+<li><a href="https://elevenlabs.io">ElevenLabs</a> — the hosted commercial alternative</li>
+</ul>
+<footer>Not affiliated with the VoiceStudio project &mdash; a third-party community setup for the
+AGPL-3.0 app by <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">debpalash</a>.
+Colab, free T4, Cloudflare tunnel.</footer></main></div></body></html>
