@@ -286,19 +286,14 @@ if PERSIST_TO_GOOGLE_DRIVE:
     os.makedirs(root + &quot;/hf&quot;, exist_ok=True)
     os.makedirs(root + &quot;/data&quot;, exist_ok=True)    # settings, licences, cloned voices
 
-    # The HF cache stores weights as symlinks into blobs/. Some mounts (Drive&#x27;s
-    # FUSE) refuse symlinks, which would break every model download - so probe
-    # it first and keep the cache local when it is unsupported.
-    def _symlinks_ok(folder):
-        probe = os.path.join(folder, &quot;.vs-symlink-probe&quot;)
-        try:
-            os.symlink(&quot;blob&quot;, probe)
-            os.remove(probe)
-            return True
-        except (OSError, NotImplementedError, AttributeError):
-            return False
-
-    hf_dir = root + &quot;/hf&quot; if _symlinks_ok(root) else &quot;/content/hf-cache&quot;
+    # The HF cache normally stores weights as symlinks into blobs/, which
+    # Drive&#x27;s FUSE mount refuses. HF_HUB_DISABLE_SYMLINKS=1 makes huggingface_hub
+    # COPY the files instead, while keeping the same snapshots/ layout that the
+    # app&#x27;s is_cached() detector understands - so the cache CAN live on Drive.
+    # The flag is read once at import time, so it is set before anything imports
+    # huggingface_hub.
+    os.environ[&quot;HF_HUB_DISABLE_SYMLINKS&quot;] = &quot;1&quot;
+    hf_dir = root + &quot;/hf&quot;
     os.makedirs(hf_dir, exist_ok=True)
     with open(root + &quot;/config.json&quot;, &quot;w&quot;) as fh:
         json.dump({&quot;hf&quot;: hf_dir, &quot;data&quot;: root + &quot;/data&quot;, &quot;root&quot;: root,
@@ -307,7 +302,7 @@ if PERSIST_TO_GOOGLE_DRIVE:
     print(&quot;Drive persistence ON at&quot;, root)
     print(&quot;  settings/voices on Drive:&quot;, root + &quot;/data&quot;)
     print(&quot;  model cache            :&quot;, hf_dir,
-          &quot;(on Drive)&quot; if hf_dir == root + &quot;/hf&quot; else &quot;(local - Drive cannot store model symlinks)&quot;)
+          &quot;(copy mode: Drive FUSE cannot hold symlinks, so HF copies instead)&quot;)
 
 print(&quot;Box 1 done.&quot;)</code></pre></div><div class="cell"><div class="cell-hd"><span class="dot"></span><span class="lbl">python</span><span class="num">box 2</span></div><pre><code># 2. Start the backend + public link (run after box 1; prints the URL + KEY for your PC)
 #    Re-run this box any time Colab restarts the app or you want a fresh pair.
@@ -387,6 +382,40 @@ def exchange(url, key, timeout=20):
     assert re.fullmatch(r&quot;ovs_admin_session_[A-Za-z0-9_-]{43}&quot;, token), payload
     return payload
 
+def _free_port(port):
+    &quot;&quot;&quot;Free the backend port without depending on lsof.
+
+    Minimal images (Colab among them) often ship without lsof, where
+    `kill $(lsof -t -i:PORT)` silently does nothing and the stale backend keeps
+    the port - the replacement then cannot bind at all. Match our own uvicorn by
+    reading /proc, then fall back to fuser for anything else on the socket.
+    &quot;&quot;&quot;
+    import signal
+    killed = []
+    for entry in os.listdir(&quot;/proc&quot;):
+        if not entry.isdigit():
+            continue
+        try:
+            with open(&quot;/proc/%s/cmdline&quot; % entry, &quot;rb&quot;) as fh:
+                argv = fh.read().decode(&quot;utf8&quot;, &quot;replace&quot;).split(&quot;\0&quot;)
+        except OSError:
+            continue
+        try:
+            ours = (&quot;uvicorn&quot; in argv and &quot;--port&quot; in argv
+                    and argv[argv.index(&quot;--port&quot;) + 1] == str(port))
+        except (ValueError, IndexError):
+            ours = False
+        if ours:
+            try:
+                os.kill(int(entry), signal.SIGKILL)
+                killed.append(entry)
+            except OSError:
+                pass
+    subprocess.run(&quot;fuser -k %s/tcp 2&gt;/dev/null || true&quot; % port, shell=True)
+    if killed:
+        print(&quot;Freed port %s from stale backend(s): %s&quot; % (port, &quot;, &quot;.join(killed)))
+
+
 def start_backend(key):
     env = os.environ.copy()
     env.pop(&quot;OMNIVOICE_API_KEY&quot;, None)
@@ -397,12 +426,15 @@ def start_backend(key):
         env[&quot;HF_HOME&quot;] = DRIVE[&quot;hf&quot;]
     env[&quot;OMNIVOICE_ALLOWED_HOSTS&quot;] = &quot;.trycloudflare.com&quot;
     env[&quot;PYTHONUNBUFFERED&quot;] = &quot;1&quot;
+    if DRIVE:
+        # Same copy mode as box 1, so the backend reads the same Drive cache.
+        env[&quot;HF_HUB_DISABLE_SYMLINKS&quot;] = &quot;1&quot;
     if importlib.util.find_spec(&quot;flashinfer&quot;) is not None:
         env[&quot;OMNIVOICE_FLASHINFER&quot;] = &quot;graph&quot;   # CUDA graphs: best for one clip at a time
         print(&quot;GPU Turbo: FlashInfer active.&quot;)
     else:
         env.pop(&quot;OMNIVOICE_FLASHINFER&quot;, None)
-    subprocess.run(f&quot;kill -9 $(lsof -t -i:{PORT}) 2&gt;/dev/null || true&quot;, shell=True)
+    _free_port(PORT)
     time.sleep(2)
     open(LOG, &quot;w&quot;).close()
     log = open(LOG, &quot;ab&quot;)
@@ -485,7 +517,7 @@ if not url:
     open(&quot;/content/cloudflared.log&quot;, &quot;w&quot;).close()
     subprocess.Popen(&quot;nohup cloudflared tunnel --url http://127.0.0.1:3900 &quot;
                      &quot;--no-autoupdate &gt; /content/cloudflared.log 2&gt;&amp;1 &amp;&quot;, shell=True)
-    for _ in range(20):
+    for _ in range(30):
         time.sleep(3)
         found = re.search(r&quot;https://[^\s]*trycloudflare\.com&quot;,
                           open(&quot;/content/cloudflared.log&quot;, errors=&quot;replace&quot;).read())
@@ -566,6 +598,7 @@ try:
 except Exception:
     pass
 os.environ[&quot;HF_HOME&quot;] = CACHE
+os.environ.setdefault(&quot;HF_HUB_DISABLE_SYMLINKS&quot;, &quot;1&quot;)   # read at import time
 print(&quot;model cache:&quot;, CACHE)
 
 # --- 1) Models -------------------------------------------------------------
@@ -713,9 +746,18 @@ for repo in PYANNOTE_REPOS:          # licence acceptance, same as box 3
         print(f&quot;  licence accepted: {repo}&quot;)
 
 if importlib.util.find_spec(&quot;pyannote&quot;) is None:   # pinned so torch never changes
+    # Pin to the EXACT installed versions. A loose floor like torch&gt;=2.8 would
+    # let pip pull a different torch build over the one box 1 installed, and the
+    # compiled CUDA stack would stop matching it.
+    import importlib.metadata as _md
     pin = &quot;/content/diarization-constraints.txt&quot;
     with open(pin, &quot;w&quot;) as fh:
-        fh.write(&quot;torch&gt;=2.8,&lt;3\ntorchaudio&gt;=2.8,&lt;3\n&quot;)
+        for _pkg in (&quot;torch&quot;, &quot;torchaudio&quot;):
+            try:
+                fh.write(f&quot;{_pkg}=={_md.version(_pkg)}\n&quot;)
+            except _md.PackageNotFoundError:
+                pass
+    print(&quot;  pinned:&quot;, open(pin).read().split())
     subprocess.run([sys.executable, &quot;-m&quot;, &quot;pip&quot;, &quot;install&quot;, &quot;-q&quot;, &quot;--no-input&quot;,
                     &quot;-c&quot;, pin, &quot;pyannote.audio&quot;], check=False)
 if importlib.util.find_spec(&quot;pyannote&quot;) is None:
