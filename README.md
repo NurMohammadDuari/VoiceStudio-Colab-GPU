@@ -71,15 +71,27 @@ app this repo configures.</sub>
 
 ---
 
-## Quick start (3 steps)
+## Quick start
 
-1. **Open the notebook** →
-   [`notebook/VoiceStudio-Colab-GPU.ipynb`](notebook/VoiceStudio-Colab-GPU.ipynb)
-   in [Google Colab](https://colab.research.google.com/).
-2. **Runtime → Change runtime type → T4 GPU**, then **Runtime → Run all**.
-3. Scroll to the end: it prints a **URL** and an **API key**. On your PC run
-   `./scripts/install-launcher.sh`, double-click the **VoiceStudio** icon, and
-   paste both.
+**1. On your PC** — one command installs the desktop app, the launcher, the icon
+and the desktop entry, all from this repository:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/NurMohammadDuari/VoiceStudio-Colab-GPU/main/install.sh | sh
+```
+
+**2. On Colab** — open
+[`notebook/VoiceStudio-Colab-GPU.ipynb`](notebook/VoiceStudio-Colab-GPU.ipynb),
+set **Runtime → Change runtime type → T4 GPU**, then **Runtime → Run all**.
+
+**3. Pair** — scroll to the end of the output: it prints a **URL** and an **API
+key**. Double-click the **VoiceStudio** icon, paste the URL, then paste the key
+(it is already on your clipboard).
+
+> The installer lives here, not at `voicestudio.sh`. It downloads the official
+> AGPL-3.0 release from `debpalash/VoiceStudio` and verifies it against that
+> release's `SHA256SUMS.txt`. Run `sh scripts/install-app.sh --check` to see what
+> it would install without downloading anything.
 
 Full walkthrough: **[docs/INSTALL.md](docs/INSTALL.md)**
 

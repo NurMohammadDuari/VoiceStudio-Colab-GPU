@@ -10,10 +10,25 @@ the VoiceStudio desktop app installed. No Python, no GPU, no CUDA on the PC.
 ### 1. Install the desktop app
 
 ```sh
-curl -fsSL https://voicestudio.sh/install | sh
+curl -fsSL https://raw.githubusercontent.com/NurMohammadDuari/VoiceStudio-Colab-GPU/main/install.sh | sh
 ```
 
-This installs an AppImage to `~/.local/bin/VoiceStudio`.
+That single command runs `scripts/install-app.sh` (installs the official AppImage
+to `~/.local/bin/VoiceStudio`, verifying its SHA-256) followed by
+`scripts/install-launcher.sh` (launcher, icon, desktop entry).
+
+To install only the app, or to pin a version:
+
+```sh
+sh scripts/install-app.sh                  # latest release
+sh scripts/install-app.sh --version 0.5.6  # a specific release
+sh scripts/install-app.sh --check          # resolve + verify, download nothing
+sh scripts/install-app.sh --uninstall      # remove the app, keep your data
+```
+
+This repository hosts the installer; the application binary itself is still the
+official release from `debpalash/VoiceStudio` and is verified against that
+release's `SHA256SUMS.txt` before it is installed.
 
 On some machines (older Intel/AMD GPUs on X11) the UI needs software rendering.
 If the window is blank or crashes, always launch it through the launcher in

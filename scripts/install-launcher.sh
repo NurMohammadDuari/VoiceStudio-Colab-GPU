@@ -28,8 +28,9 @@ APP="$HOME/.local/bin/VoiceStudio"
 if [ -x "$APP" ]; then
     echo "     found $APP"
 else
-    echo "     VoiceStudio is not installed yet. Run this first:"
-    echo "       curl -fsSL https://voicestudio.sh/install | sh"
+    echo "     VoiceStudio is not installed yet. Run the app installer first:"
+    echo "       sh $(dirname "$0")/install-app.sh"
+    echo "     (or from a clone: curl -fsSL https://raw.githubusercontent.com/NurMohammadDuari/VoiceStudio-Colab-GPU/main/install.sh | sh)"
     exit 1
 fi
 

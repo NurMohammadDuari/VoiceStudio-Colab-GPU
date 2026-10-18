@@ -36,6 +36,11 @@ jobs:
           done
           echo "shell syntax ok"
 
+      - name: Installer resolves the official release and its checksum
+        run: |
+          sh scripts/install-app.sh --check
+          echo "install-app.sh resolved a real, checksummed release"
+
       - name: No credentials may be committed
         run: |
           if grep -rInE "[a-z0-9-]{4,}\.trycloudflare\.com" --exclude-dir=.git . \
