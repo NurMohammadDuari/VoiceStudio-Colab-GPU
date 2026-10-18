@@ -94,9 +94,22 @@ The tunnel exists but nothing is listening on the VM. Re-run box 2.
 
 ### Models downloaded but load is very slow
 
-Expected if they live on Google Drive: FUSE is slower than local disk. Set
-`PERSIST_TO_GOOGLE_DRIVE = False` in box 1 to keep models local and accept
-re-downloading after a VM reset.
+Expected if they live on Google Drive: weights are copied there and FUSE is
+slower than local disk. Set `PERSIST_TO_GOOGLE_DRIVE = False` in box 1 to keep
+models local, accepting a re-download after a VM reset.
+
+### Models report "still needed" although box 3 finished
+
+The box downloaded into a different cache than the backend reads — almost always
+after a kernel restart. Re-run box 3: it re-applies the Drive/`HF_HOME` config
+itself before downloading. The same applies to box 5 (dubbing).
+
+### Box 2: `Backend did not come up` on a re-run
+
+A previous backend can keep port 3900. Box 2 reclaims the port without relying
+on `lsof` (absent from many minimal images) by matching its own uvicorn process
+in `/proc`, then falling back to `fuser`. If it still fails:
+`!tail -40 /content/omnivoice_backend.log`.
 
 ### `GPU Turbo not available (...)`
 

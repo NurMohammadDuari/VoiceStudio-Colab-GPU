@@ -96,7 +96,7 @@ Colab wipes `/content` when the VM is recycled. Box 1 mounts Drive and stores:
 ```
 /content/drive/omnivoice/
 ├── config.json      paths to the model cache and the data dir
-├── hf/              model weights (if the mount supports symlinks)
+├── hf/              model weights (stored in copy mode - see below)
 ├── data/            settings, licences, accepted models, cloned voices
 └── api_key.txt      the API key - survives VM resets
 ```
@@ -104,10 +104,13 @@ Colab wipes `/content` when the VM is recycled. Box 1 mounts Drive and stores:
 Because the key survives, the one already saved on your PC keeps working after a
 recycle. Only the URL changes.
 
-**Symlink caveat:** the Hugging Face cache stores weights as symlinks into
-`blobs/`. Drive's FUSE mount refuses symlinks, which would break every download.
-Box 1 probes this and keeps the model cache local automatically when Drive
-cannot host it.
+**Symlinks:** by default the Hugging Face cache stores weights as symlinks into
+`blobs/`, and Drive's FUSE mount refuses symlinks. Box 1 therefore sets
+`HF_HUB_DISABLE_SYMLINKS=1`, which makes `huggingface_hub` **copy** each file
+while keeping the same `snapshots/` layout — so the cache stays readable by the
+app's `is_cached()` detector and still lives on Drive. The flag is read once at
+import time, which is why boxes 1, 2, 3 and 5 each set it before importing
+`huggingface_hub`.
 
 ---
 
