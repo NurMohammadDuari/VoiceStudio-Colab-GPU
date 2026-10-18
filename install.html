@@ -1,0 +1,288 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Installation · VoiceStudio on Colab</title>
+<meta name="description" content="Set up VoiceStudio on a free Google Colab T4 and pair the desktop app.">
+<meta property="og:type" content="website"><meta property="og:title" content="Installation · VoiceStudio on Colab">
+<meta property="og:description" content="Set up VoiceStudio on a free Google Colab T4 and pair the desktop app."><meta property="og:image" content="https://nurmohammadduari.github.io/VoiceStudio-Colab-GPU/assets/social-preview.png">
+<link rel="canonical" href="https://nurmohammadduari.github.io/VoiceStudio-Colab-GPU/install.html">
+<style>
+:root{
+  --bg:#ffffff; --bg-soft:#f5f5f7; --card:#ffffff;
+  --text:#1d1d1f; --muted:#6e6e73; --faint:#86868b;
+  --hair:rgba(0,0,0,.10); --hair-soft:rgba(0,0,0,.06);
+  --accent:#0071e3; --mint:#0a8f6c;
+  --code-bg:#f5f5f7; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --nav-bg:rgba(255,255,255,.72);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#000000; --bg-soft:#0b0b0d; --card:#141416;
+  --text:#f5f5f7; --muted:#a1a1a6; --faint:#86868b;
+  --hair:rgba(255,255,255,.14); --hair-soft:rgba(255,255,255,.08);
+  --accent:#2997ff; --mint:#30d158;
+  --code-bg:#1c1c1e; --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+  --nav-bg:rgba(0,0,0,.72);
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:400 17px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.011em}
+
+/* frosted top nav */
+.nav{position:sticky;top:0;z-index:50;background:var(--nav-bg);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--hair-soft)}
+.nav-in{max-width:1080px;margin:0 auto;padding:0 22px;height:52px;display:flex;align-items:center;gap:28px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px;letter-spacing:-.01em;
+  color:var(--text);text-decoration:none;white-space:nowrap}
+.brand img{width:22px;height:22px;border-radius:6px}
+.nav-links{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13.5px;padding:6px 11px;border-radius:8px;
+  white-space:nowrap;transition:color .2s,background .2s}
+.nav-links a:hover{color:var(--text);background:var(--hair-soft)}
+.nav-links a.on{color:var(--text);background:var(--hair-soft)}
+
+/* content column */
+main{max-width:820px;margin:0 auto;padding:56px 22px 110px}
+.hero{margin-bottom:52px}
+.hero .eyebrow{display:inline-block;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:var(--mint);
+  background:color-mix(in srgb,var(--mint) 10%,transparent);padding:5px 11px;border-radius:999px;margin-bottom:18px}
+.hero h1{font-size:clamp(2.3rem,5.4vw,3.5rem);line-height:1.06;letter-spacing:-.032em;font-weight:700;margin:0 0 14px}
+.hero p.lede{font-size:clamp(1.05rem,2.1vw,1.3rem);line-height:1.45;letter-spacing:-.018em;color:var(--muted);margin:0 0 26px}
+.cta{display:flex;flex-wrap:wrap;gap:11px}
+.btn{display:inline-block;padding:11px 21px;border-radius:980px;font-size:14.5px;font-weight:500;
+  text-decoration:none;transition:transform .15s,filter .2s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{filter:brightness(1.08)}
+.btn-s{background:var(--hair-soft);color:var(--text)}
+
+/* typography */
+h1{font-size:clamp(2.1rem,4.6vw,2.9rem);line-height:1.08;letter-spacing:-.03em;font-weight:700;margin:0 0 12px}
+h2{font-size:clamp(1.5rem,2.6vw,1.85rem);line-height:1.18;letter-spacing:-.022em;font-weight:650;
+  margin:2.9em 0 .7em;padding-top:.35em}
+h3{font-size:1.22rem;letter-spacing:-.015em;font-weight:600;margin:2.1em 0 .5em}
+h4{font-size:1.03rem;font-weight:600;margin:1.7em 0 .4em}
+p,li{color:var(--text)}
+p{margin:0 0 1.05em}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+hr{border:0;height:1px;background:var(--hair-soft);margin:3.2em 0}
+strong{font-weight:600}
+small,.hero small{color:var(--faint)}
+blockquote{margin:1.6em 0;padding:2px 0 2px 18px;border-left:2px solid var(--accent);
+  color:var(--muted);font-style:normal}
+
+/* code */
+code{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.855em;
+  background:var(--code-bg);padding:.15em .38em;border-radius:5px}
+pre{background:var(--code-bg);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;margin:1.5em 0}
+pre code{background:none;padding:0;font-size:.855em;line-height:1.62}
+
+/* tables */
+.tw{overflow-x:auto;margin:1.6em 0;border:1px solid var(--hair-soft);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:460px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair-soft)}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;font-size:13px;letter-spacing:.01em;color:var(--muted);background:var(--bg-soft)}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg-soft) 55%,transparent)}
+
+img{max-width:100%;height:auto;border-radius:12px;border:1px solid var(--hair-soft);display:block;margin:1.2em 0}
+ul,ol{padding-left:1.35em;margin:0 0 1.1em}
+li{margin:.32em 0}
+li::marker{color:var(--faint)}
+
+footer{border-top:1px solid var(--hair-soft);margin-top:76px;padding-top:26px;
+  color:var(--faint);font-size:13.5px;line-height:1.6}
+footer a{color:var(--muted)}
+.toc{background:var(--bg-soft);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 20px;margin:26px 0}
+.toc b{font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint)}
+.toc ol{margin:8px 0 0;padding-left:1.2em}
+.toc li{margin:.2em 0;font-size:14.5px}
+
+.cell{margin:0 0 20px;border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden;background:var(--card)}
+.cell-hd{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg-soft);border-bottom:1px solid var(--hair-soft)}
+.cell-hd .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+.cell-hd .lbl{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.cell-hd .num{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cell pre{margin:0;border:0;border-radius:0;background:transparent}
+.cell pre code{font-size:13.5px}
+.cell.md{padding:2px 20px 10px}
+.cell.md>:first-child{margin-top:14px}
+
+@media(max-width:720px){
+  .nav-in{height:auto;flex-wrap:wrap;padding:12px 18px;gap:12px}
+  .nav-links{margin-left:0;width:100%}
+  main{padding:34px 18px 76px}
+}
+</style></head><body>
+<nav class="nav"><div class="nav-in">
+<a class="brand" href="index.html"><img src="assets/voicestudio.png" alt="">VoiceStudio on Colab</a>
+<div class="nav-links"><a href="index.html" class="">Overview</a><a href="install.html" class="on">Install</a><a href="architecture.html" class="">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="">FAQ</a><a href="notebook.html" class="">Notebook</a></div>
+<button id="tt" style="border:1px solid var(--hair-soft);background:var(--hair-soft);color:var(--muted);
+  border-radius:8px;font:inherit;font-size:12.5px;padding:4px 10px;cursor:pointer;margin-left:8px">Dark</button>
+</div></nav>
+<main><div class="hero" style="margin-bottom:38px"><h1>Installation</h1><p class="lede">Set up VoiceStudio on a free Google Colab T4 and pair the desktop app.</p></div><h1 id="installation">Installation</h1>
+<p>Everything below assumes you have a Google account (for Colab) and a PC with
+the VoiceStudio desktop app installed. No Python, no GPU, no CUDA on the PC.</p>
+<hr />
+<h2 id="part-1-the-pc-once">Part 1 — the PC (once)</h2>
+<h3 id="1-install-the-desktop-app">1. Install the desktop app</h3>
+<pre><code class="language-sh">curl -fsSL https://raw.githubusercontent.com/NurMohammadDuari/VoiceStudio-Colab-GPU/main/install.sh | sh
+</code></pre>
+<p>That single command runs <code>scripts/install-app.sh</code> (installs the official AppImage
+to <code>~/.local/bin/VoiceStudio</code>, verifying its SHA-256) followed by
+<code>scripts/install-launcher.sh</code> (launcher, icon, desktop entry).</p>
+<p>To install only the app, or to pin a version:</p>
+<pre><code class="language-sh">sh scripts/install-app.sh                  # latest release
+sh scripts/install-app.sh --version 0.5.6  # a specific release
+sh scripts/install-app.sh --check          # resolve + verify, download nothing
+sh scripts/install-app.sh --uninstall      # remove the app, keep your data
+</code></pre>
+<p>This repository hosts the installer; the application binary itself is still the
+official release from <code>debpalash/VoiceStudio</code> and is verified against that
+release's <code>SHA256SUMS.txt</code> before it is installed.</p>
+<p>On some machines (older Intel/AMD GPUs on X11) the UI needs software rendering.
+If the window is blank or crashes, always launch it through the launcher in
+Part 2 — it passes <code>--disable-gpu</code> for you.</p>
+<h3 id="2-install-the-launcher">2. Install the launcher</h3>
+<pre><code class="language-sh">./scripts/install-launcher.sh
+</code></pre>
+<p>This copies the launcher to <code>~/.local/bin/voicestudio-remote</code>, creates the icon
+and the <code>.desktop</code> entry, and installs the app icon. Re-run it any time you
+update the launcher.</p>
+<p>Check it worked:</p>
+<pre><code class="language-sh">. ~/.local/share/applications/voicestudio-remote.desktop   # no, just verify:
+ls -l ~/.local/bin/voicestudio-remote ~/Desktop/VoiceStudio.desktop
+</code></pre>
+<hr />
+<h2 id="part-2-colab-first-run">Part 2 — Colab (first run)</h2>
+<ol>
+<li>Open <a href="../notebook/VoiceStudio-Colab-GPU.ipynb">VoiceStudio-Colab-GPU.ipynb</a>
+   in Google Colab.</li>
+<li><strong>Runtime → Change runtime type → T4 GPU.</strong> Confirm it says GPU.</li>
+<li><strong>Runtime → Run all</strong> (or run boxes 1, 2, 3 in order).</li>
+<li>Wait. First run downloads the app, ffmpeg, the engine stack and roughly 5 GB
+   of models. Ten to twenty minutes is normal.</li>
+</ol>
+<h3 id="the-boxes">The boxes</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Box</th>
+<th>What it does</th>
+<th>When to run</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Installs the app on the VM, mounts Google Drive, optionally installs GPU Turbo</td>
+<td>once per VM</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Starts the backend, opens the public tunnel, prints <strong>URL + API key</strong></td>
+<td>every time Colab restarts</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Downloads models, sets privacy, activates Max quality</td>
+<td>once per VM</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Reprints the URL and key</td>
+<td>any time you lose them</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Optional: dubbing pack (speaker separation)</td>
+<td>once, if you want dubbing</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="licence-acceptance-is-deliberately-not-automatic">### Licence acceptance is deliberately not automatic</h3>
+<p>Box 3 ships with <code>ACCEPT_MODEL_LICENCES = False</code>. Acceptance is a legal
+acknowledgement of each model's terms, so the notebook refuses to record it for
+you. Read them in the app under <strong>Model Catalogue</strong>, then set that flag to
+<code>True</code> and re-run box 3.</p>
+<h3 id="watch-for-these-lines">Watch for these lines</h3>
+<p>Box 2 ends with:</p>
+<pre><code>Backend ready: {'status': 'ok', 'device': 'cuda (Tesla T4)', ...}
+Public link verified end to end.
+==================================================================
+URL:
+https://three-random-words-here.trycloudflare.com
+
+API KEY:
+&lt;43 characters&gt;
+</code></pre>
+<p>That <code>Public link verified end to end.</code> line means the box proved the key works
+through the public tunnel, using the same handshake your PC app uses. If it
+prints, the pairing will work.</p>
+<hr />
+<h2 id="part-3-pair-the-pc">Part 3 — pair the PC</h2>
+<ol>
+<li>Double-click the <strong>VoiceStudio</strong> icon on your desktop.</li>
+<li>Paste the <strong>URL</strong>.</li>
+<li>Paste the <strong>API key</strong> — the launcher put it on your clipboard (Ctrl+V).</li>
+<li>In the app: <strong>Settings → Sharing → Remote backend</strong>, paste the key,
+   <strong>Test</strong>, then <strong>Save &amp; reload</strong>.</li>
+</ol>
+<p>The app stores only the URL on disk; the key lives in the app's memory for this
+session and is exchanged for a short-lived session token. That is by design —
+so after each app restart you repeat step 3-4 once (the key is on your clipboard,
+so it is one Ctrl+V).</p>
+<h3 id="when-the-launcher-asks-for-the-key">When the launcher asks for the key</h3>
+<p>It only asks when your saved key is <strong>rejected by the backend</strong>. It verifies
+with a real key exchange first. If it asks, the usual cause is a URL and a key
+copied from two different Colab runs — copy both from the same output.</p>
+<hr />
+<h2 id="part-4-optional-dubbing">Part 4 — optional: dubbing</h2>
+<p>Dubbing needs speaker separation. On a remote backend the only viable engine is
+pyannote (the Sortformer alternative needs a native runtime that ships only with
+the desktop installer). That needs a Hugging Face account, once:</p>
+<ol>
+<li>Log in at <a href="https://huggingface.co">huggingface.co</a>.</li>
+<li>Open <a href="https://huggingface.co/pyannote/speaker-diarization-3.1">pyannote/speaker-diarization-3.1</a>
+   and click <strong>Agree and access repository</strong>.</li>
+<li>Do the same on <a href="https://huggingface.co/pyannote/segmentation-3.0">pyannote/segmentation-3.0</a>.</li>
+<li>Create a <strong>read</strong> token at <a href="https://huggingface.co/settings/tokens">huggingface.co/settings/tokens</a>.</li>
+<li>Paste it into box 5 and run it.</li>
+</ol>
+<hr />
+<h2 id="daily-use">Daily use</h2>
+<p>Keep the Colab tab open. Box 2 prints a keep-alive heartbeat every two minutes;
+that reduces disconnects but cannot beat Colab's hard limits.</p>
+<p>When it dies: run box 2, paste the new URL, done. The key does not change.</p>
+<h2 id="performance">Performance</h2>
+<p>Box 1 installs <strong>GPU Turbo</strong> (FlashInfer CUDA graphs) by default. The first
+generation after a restart compiles kernels and can take minutes; after that,
+generations are roughly twice as fast. Set <code>INSTALL_GPU_TURBO = False</code> at the
+top of box 1 to skip it.</p>
+<p>VRAM sitting at 4 GB of 15 GB is normal and not a problem — the model is ~2.4 GB
+and unallocated VRAM does not make anything faster. See
+<a href="FAQ.md#why-is-gpu-usage-so-low">FAQ.md</a>.</p>
+<footer>A third-party community setup for the AGPL-3.0
+<a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">VoiceStudio</a> app by debpalash.
+Not affiliated with that project. Runs on Google Colab and a Cloudflare tunnel.</footer>
+</main><script>
+(function(){
+ var b=document.getElementById('tt');
+ if(!b) return;
+ var k='vs-theme', mq=window.matchMedia('(prefers-color-scheme: dark)');
+ function cur(){ return localStorage.getItem(k) || (mq.matches?'dark':'light'); }
+ function apply(t){ document.documentElement.dataset.theme=t; b.textContent = t==='dark'?'Light':'Dark'; }
+ apply(cur());
+ b.addEventListener('click',function(){
+   var t = (localStorage.getItem(k) || (mq.matches?'dark':'light'))==='dark' ? 'light':'dark';
+   localStorage.setItem(k,t); apply(t);
+ });
+ mq.addEventListener && mq.addEventListener('change',function(e){
+   if(!localStorage.getItem(k)) apply(e.matches?'dark':'light');
+ });
+})();
+</script></body></html>

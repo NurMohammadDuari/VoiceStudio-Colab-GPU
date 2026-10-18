@@ -1,0 +1,311 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Architecture · VoiceStudio on Colab</title>
+<meta name="description" content="Components, environment variables and the API key handshake.">
+<meta property="og:type" content="website"><meta property="og:title" content="Architecture · VoiceStudio on Colab">
+<meta property="og:description" content="Components, environment variables and the API key handshake."><meta property="og:image" content="https://nurmohammadduari.github.io/VoiceStudio-Colab-GPU/assets/social-preview.png">
+<link rel="canonical" href="https://nurmohammadduari.github.io/VoiceStudio-Colab-GPU/architecture.html">
+<style>
+:root{
+  --bg:#ffffff; --bg-soft:#f5f5f7; --card:#ffffff;
+  --text:#1d1d1f; --muted:#6e6e73; --faint:#86868b;
+  --hair:rgba(0,0,0,.10); --hair-soft:rgba(0,0,0,.06);
+  --accent:#0071e3; --mint:#0a8f6c;
+  --code-bg:#f5f5f7; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --nav-bg:rgba(255,255,255,.72);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#000000; --bg-soft:#0b0b0d; --card:#141416;
+  --text:#f5f5f7; --muted:#a1a1a6; --faint:#86868b;
+  --hair:rgba(255,255,255,.14); --hair-soft:rgba(255,255,255,.08);
+  --accent:#2997ff; --mint:#30d158;
+  --code-bg:#1c1c1e; --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+  --nav-bg:rgba(0,0,0,.72);
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:400 17px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.011em}
+
+/* frosted top nav */
+.nav{position:sticky;top:0;z-index:50;background:var(--nav-bg);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--hair-soft)}
+.nav-in{max-width:1080px;margin:0 auto;padding:0 22px;height:52px;display:flex;align-items:center;gap:28px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px;letter-spacing:-.01em;
+  color:var(--text);text-decoration:none;white-space:nowrap}
+.brand img{width:22px;height:22px;border-radius:6px}
+.nav-links{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13.5px;padding:6px 11px;border-radius:8px;
+  white-space:nowrap;transition:color .2s,background .2s}
+.nav-links a:hover{color:var(--text);background:var(--hair-soft)}
+.nav-links a.on{color:var(--text);background:var(--hair-soft)}
+
+/* content column */
+main{max-width:820px;margin:0 auto;padding:56px 22px 110px}
+.hero{margin-bottom:52px}
+.hero .eyebrow{display:inline-block;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:var(--mint);
+  background:color-mix(in srgb,var(--mint) 10%,transparent);padding:5px 11px;border-radius:999px;margin-bottom:18px}
+.hero h1{font-size:clamp(2.3rem,5.4vw,3.5rem);line-height:1.06;letter-spacing:-.032em;font-weight:700;margin:0 0 14px}
+.hero p.lede{font-size:clamp(1.05rem,2.1vw,1.3rem);line-height:1.45;letter-spacing:-.018em;color:var(--muted);margin:0 0 26px}
+.cta{display:flex;flex-wrap:wrap;gap:11px}
+.btn{display:inline-block;padding:11px 21px;border-radius:980px;font-size:14.5px;font-weight:500;
+  text-decoration:none;transition:transform .15s,filter .2s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{filter:brightness(1.08)}
+.btn-s{background:var(--hair-soft);color:var(--text)}
+
+/* typography */
+h1{font-size:clamp(2.1rem,4.6vw,2.9rem);line-height:1.08;letter-spacing:-.03em;font-weight:700;margin:0 0 12px}
+h2{font-size:clamp(1.5rem,2.6vw,1.85rem);line-height:1.18;letter-spacing:-.022em;font-weight:650;
+  margin:2.9em 0 .7em;padding-top:.35em}
+h3{font-size:1.22rem;letter-spacing:-.015em;font-weight:600;margin:2.1em 0 .5em}
+h4{font-size:1.03rem;font-weight:600;margin:1.7em 0 .4em}
+p,li{color:var(--text)}
+p{margin:0 0 1.05em}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+hr{border:0;height:1px;background:var(--hair-soft);margin:3.2em 0}
+strong{font-weight:600}
+small,.hero small{color:var(--faint)}
+blockquote{margin:1.6em 0;padding:2px 0 2px 18px;border-left:2px solid var(--accent);
+  color:var(--muted);font-style:normal}
+
+/* code */
+code{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.855em;
+  background:var(--code-bg);padding:.15em .38em;border-radius:5px}
+pre{background:var(--code-bg);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;margin:1.5em 0}
+pre code{background:none;padding:0;font-size:.855em;line-height:1.62}
+
+/* tables */
+.tw{overflow-x:auto;margin:1.6em 0;border:1px solid var(--hair-soft);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:460px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair-soft)}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;font-size:13px;letter-spacing:.01em;color:var(--muted);background:var(--bg-soft)}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg-soft) 55%,transparent)}
+
+img{max-width:100%;height:auto;border-radius:12px;border:1px solid var(--hair-soft);display:block;margin:1.2em 0}
+ul,ol{padding-left:1.35em;margin:0 0 1.1em}
+li{margin:.32em 0}
+li::marker{color:var(--faint)}
+
+footer{border-top:1px solid var(--hair-soft);margin-top:76px;padding-top:26px;
+  color:var(--faint);font-size:13.5px;line-height:1.6}
+footer a{color:var(--muted)}
+.toc{background:var(--bg-soft);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 20px;margin:26px 0}
+.toc b{font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint)}
+.toc ol{margin:8px 0 0;padding-left:1.2em}
+.toc li{margin:.2em 0;font-size:14.5px}
+
+.cell{margin:0 0 20px;border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden;background:var(--card)}
+.cell-hd{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg-soft);border-bottom:1px solid var(--hair-soft)}
+.cell-hd .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+.cell-hd .lbl{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.cell-hd .num{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cell pre{margin:0;border:0;border-radius:0;background:transparent}
+.cell pre code{font-size:13.5px}
+.cell.md{padding:2px 20px 10px}
+.cell.md>:first-child{margin-top:14px}
+
+@media(max-width:720px){
+  .nav-in{height:auto;flex-wrap:wrap;padding:12px 18px;gap:12px}
+  .nav-links{margin-left:0;width:100%}
+  main{padding:34px 18px 76px}
+}
+</style></head><body>
+<nav class="nav"><div class="nav-in">
+<a class="brand" href="index.html"><img src="assets/voicestudio.png" alt="">VoiceStudio on Colab</a>
+<div class="nav-links"><a href="index.html" class="">Overview</a><a href="install.html" class="">Install</a><a href="architecture.html" class="on">Architecture</a><a href="how-it-works.html" class="">Inside the app</a><a href="troubleshooting.html" class="">Troubleshooting</a><a href="security.html" class="">Security</a><a href="faq.html" class="">FAQ</a><a href="notebook.html" class="">Notebook</a></div>
+<button id="tt" style="border:1px solid var(--hair-soft);background:var(--hair-soft);color:var(--muted);
+  border-radius:8px;font:inherit;font-size:12.5px;padding:4px 10px;cursor:pointer;margin-left:8px">Dark</button>
+</div></nav>
+<main><div class="hero" style="margin-bottom:38px"><h1>Architecture</h1><p class="lede">Components, environment variables and the API key handshake.</p></div><h1 id="architecture">Architecture</h1>
+<p>Four pieces. Two of them are yours, one is Google, one is Cloudflare.</p>
+<pre><code>  YOUR PC                          COLAB (T4 VM)                  PUBLIC
+┌───────────────┐   HTTPS    ┌──────────────────────┐
+│ Electron app  │────────────▶│ VoiceStudio backend   │
+│ (UI only)     │◀────────────│ FastAPI on :3900      │
+│               │             │  ├─ OmniVoice  (TTS)  │
+│ ~/.local/bin/ │             │  ├─ faster-whisper    │
+│  voicestudio- │             │  ├─ NLLB (translate)  │
+│  remote       │             │  └─ pyannote (dub)*   │
+└───────────────┘             └──────────┬───────────┘
+      ▲                                    │ 127.0.0.1
+      │  URL + key on the clipboard        ▼
+      └──────────────── cloudflared quick tunnel ────────────▶ you
+                             (random *.trycloudflare.com)
+</code></pre>
+<p>* only after the optional dubbing box.</p>
+<hr />
+<h2 id="component-1-the-desktop-app">Component 1 — the desktop app</h2>
+<p>The official <a href="https://github.com/debpalash/VoiceStudio">VoiceStudio</a> Electron
+build, installed as an AppImage. It renders the UI and does <strong>no</strong> compute. It is
+pointed at the Colab backend instead of a local one.</p>
+<p>Two files on the PC:</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.local/bin/voicestudio-remote</code></td>
+<td>the launcher: asks for URL/key, verifies, launches</td>
+</tr>
+<tr>
+<td><code>~/.config/VoiceStudio/remote-backend.json</code></td>
+<td>the saved URL, written by the app itself</td>
+</tr>
+<tr>
+<td><code>~/.config/VoiceStudio/remote-key.txt</code></td>
+<td>the saved API key, written by the launcher (0600)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The app persists only the URL — that is the upstream design
+(<code>electron/src/main/remote-backend.ts</code>). The key is used once, to exchange a
+session, and then held in memory only.</p>
+<h2 id="component-2-the-backend-on-colab">Component 2 — the backend on Colab</h2>
+<p>Started by box 2:</p>
+<pre><code class="language-sh">python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 3900
+</code></pre>
+<p>Bound to loopback only. Nothing is exposed directly; the tunnel is the only way
+in.</p>
+<h3 id="environment-variables">Environment variables</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OMNIVOICE_SERVER_MODE</code></td>
+<td><code>1</code></td>
+<td>headless mode; relaxes the loopback admin gate (in Docker the bridge makes everything look non-loopback)</td>
+</tr>
+<tr>
+<td><code>OMNIVOICE_API_KEY</code></td>
+<td>43-char random</td>
+<td>the admin credential; see below</td>
+</tr>
+<tr>
+<td><code>OMNIVOICE_DATA_DIR</code></td>
+<td>Drive or <code>/content</code></td>
+<td>settings, licences, cloned voices</td>
+</tr>
+<tr>
+<td><code>HF_HOME</code></td>
+<td>Drive or <code>/content</code></td>
+<td>model cache</td>
+</tr>
+<tr>
+<td><code>OMNIVOICE_ALLOWED_HOSTS</code></td>
+<td><code>.trycloudflare.com</code></td>
+<td>host-name allow-list for the tunnel</td>
+</tr>
+<tr>
+<td><code>OMNIVOICE_FLASHINFER</code></td>
+<td><code>graph</code></td>
+<td>FlashInfer packed attention + CUDA graphs</td>
+</tr>
+<tr>
+<td><code>PYTHONUNBUFFERED</code></td>
+<td><code>1</code></td>
+<td>live logs</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="the-credential-model">The credential model</h3>
+<p>The app has a two-tier design:</p>
+<ul>
+<li><strong>consumption</strong> — generate, clone, transcribe, dub, download</li>
+<li><strong>admin</strong> — settings, model installs, engine selection, diagnostics</li>
+</ul>
+<p>On a normal desktop both tiers come free, because "the user" is identified as
+loopback. Over a tunnel that is not true, so admin needs a credential. That
+credential is <code>OMNIVOICE_API_KEY</code>.</p>
+<p>Setting the key has one consequence worth knowing: <strong>keyless requests stop
+working, including reads</strong>. So once the key is configured, the PC app must hold
+it. That is why the launcher verifies the key and keeps it on the clipboard.</p>
+<h2 id="component-3-the-tunnel">Component 3 — the tunnel</h2>
+<p>A <code>cloudflared</code> quick tunnel gives a random public hostname pointing at
+<code>127.0.0.1:3900</code>. The hostname is random and changes whenever the tunnel
+restarts, which makes it part of your security story: an attacker needs both the
+hostname and the key.</p>
+<p>The tunnel forwards the client's IP in <code>X-Forwarded-For</code>, which uvicorn trusts
+from loopback. That is what makes the backend correctly see your PC as a
+<em>remote</em> client — otherwise every security gate would silently pass.</p>
+<h2 id="component-4-google-drive-optional-but-recommended">Component 4 — Google Drive (optional but recommended)</h2>
+<p>Colab wipes <code>/content</code> when the VM is recycled. Box 1 mounts Drive and stores:</p>
+<pre><code>/content/drive/omnivoice/
+├── config.json      paths to the model cache and the data dir
+├── hf/              model weights (if the mount supports symlinks)
+├── data/            settings, licences, accepted models, cloned voices
+└── api_key.txt      the API key - survives VM resets
+</code></pre>
+<p>Because the key survives, the one already saved on your PC keeps working after a
+recycle. Only the URL changes.</p>
+<p><strong>Symlink caveat:</strong> the Hugging Face cache stores weights as symlinks into
+<code>blobs/</code>. Drive's FUSE mount refuses symlinks, which would break every download.
+Box 1 probes this and keeps the model cache local automatically when Drive
+cannot host it.</p>
+<hr />
+<h2 id="the-key-handshake">The key handshake</h2>
+<p>Exactly what the desktop app does, and what box 2 verifies before printing:</p>
+<pre><code>POST /api/auth/session
+Authorization: Bearer &lt;OMNIVOICE_API_KEY&gt;
+Content-Type: application/json
+
+{&quot;transport&quot;: &quot;bearer&quot;}
+</code></pre>
+<pre><code class="language-json">201 Created
+{&quot;token&quot;: &quot;ovs_admin_session_&lt;43 chars&gt;&quot;, &quot;expires_at&quot;: 0, &quot;expires_in&quot;: 32400}
+</code></pre>
+<p>That session token is then sent as <code>Authorization: Bearer &lt;session token&gt;</code> on
+every request. It lasts nine hours.</p>
+<p>Sessions are <strong>process-local</strong> (in-memory, with a per-process pepper), so
+restarting the backend invalidates them. The app then asks for the key once
+more — which is why the launcher keeps that key ready to paste.</p>
+<p><code>/health</code> is exempt from all gates (<code>_STARTUP_EXEMPT</code>), which is how the app
+probes liveness before it has a session at all.</p>
+<hr />
+<h2 id="what-is-deliberately-not-possible">What is deliberately not possible</h2>
+<p>A handful of routes can never work from a remote client, by design: they act on
+the <strong>backend host's own filesystem</strong> — copying a file to a Colab path, opening
+a file manager on a headless box, ffprobing a Colab path, installing a native
+runtime. Their detail message is literally "native filesystem access requires
+loopback origin".</p>
+<p>This costs you nothing in practice: <strong>saving audio or video to your PC is an
+HTTP download</strong>, handled by the app's main process, not those routes.</p>
+<p>See <a href="HOW-IT-WORKS-IN-THE-APP.md">HOW-IT-WORKS-IN-THE-APP.md</a> for the full route
+map.</p>
+<footer>A third-party community setup for the AGPL-3.0
+<a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">VoiceStudio</a> app by debpalash.
+Not affiliated with that project. Runs on Google Colab and a Cloudflare tunnel.</footer>
+</main><script>
+(function(){
+ var b=document.getElementById('tt');
+ if(!b) return;
+ var k='vs-theme', mq=window.matchMedia('(prefers-color-scheme: dark)');
+ function cur(){ return localStorage.getItem(k) || (mq.matches?'dark':'light'); }
+ function apply(t){ document.documentElement.dataset.theme=t; b.textContent = t==='dark'?'Light':'Dark'; }
+ apply(cur());
+ b.addEventListener('click',function(){
+   var t = (localStorage.getItem(k) || (mq.matches?'dark':'light'))==='dark' ? 'light':'dark';
+   localStorage.setItem(k,t); apply(t);
+ });
+ mq.addEventListener && mq.addEventListener('change',function(e){
+   if(!localStorage.getItem(k)) apply(e.matches?'dark':'light');
+ });
+})();
+</script></body></html>

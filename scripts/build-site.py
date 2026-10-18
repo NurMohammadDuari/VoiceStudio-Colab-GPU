@@ -6,7 +6,7 @@
 
 Requires: pip install markdown
 """
-import markdown, pathlib, html, re, shutil
+import json, markdown, pathlib, html, re, shutil
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "dist"
@@ -21,10 +21,11 @@ PAGES = [
     ("troubleshooting.html", "TROUBLESHOOTING.md", "Troubleshooting", "Every error message this setup produces, and what it means."),
     ("security.html", "SECURITY.md", "Security", "Threat model, key handling and residual risks."),
     ("faq.html", "FAQ.md", "FAQ", "Cost, privacy, speed and commercial use."),
+    ("notebook.html", None, "The notebook", "Every box, read in the browser - or open it straight in Colab."),
 ]
 NAV = [("index.html","Overview"),("install.html","Install"),("architecture.html","Architecture"),
        ("how-it-works.html","Inside the app"),("troubleshooting.html","Troubleshooting"),
-       ("security.html","Security"),("faq.html","FAQ")]
+       ("security.html","Security"),("faq.html","FAQ"),("notebook.html","Notebook")]
 REPO = "https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU"
 SITE = "https://nurmohammadduari.github.io/VoiceStudio-Colab-GPU"
 
@@ -125,6 +126,16 @@ footer a{color:var(--muted)}
 .toc ol{margin:8px 0 0;padding-left:1.2em}
 .toc li{margin:.2em 0;font-size:14.5px}
 
+.cell{margin:0 0 20px;border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden;background:var(--card)}
+.cell-hd{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg-soft);border-bottom:1px solid var(--hair-soft)}
+.cell-hd .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+.cell-hd .lbl{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.cell-hd .num{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cell pre{margin:0;border:0;border-radius:0;background:transparent}
+.cell pre code{font-size:13.5px}
+.cell.md{padding:2px 20px 10px}
+.cell.md>:first-child{margin-top:14px}
+
 @media(max-width:720px){
   .nav-in{height:auto;flex-wrap:wrap;padding:12px 18px;gap:12px}
   .nav-links{margin-left:0;width:100%}
@@ -157,10 +168,43 @@ def wrap_tables(body):
     return re.sub(r'<table>', '<div class="tw"><table>', body).replace('</table>', '</table></div>')
 
 for out_name, src_name, nav_title, lede in PAGES:
-    src = ROOT / src_name if src_name == "README.md" else ROOT / "docs" / src_name
-    raw = src.read_text(encoding="utf-8")
+    raw = ""
+    if src_name:
+        src = ROOT / src_name if src_name == "README.md" else ROOT / "docs" / src_name
+        raw = src.read_text(encoding="utf-8")
 
-    if out_name == "index.html":
+    if out_name == "notebook.html":
+        nb = json.loads((ROOT / "notebook" / "VoiceStudio-Colab-GPU.ipynb").read_text(encoding="utf-8"))
+        nb_url = f"{REPO}/blob/main/notebook/VoiceStudio-Colab-GPU.ipynb"
+        colab_url = ("https://colab.research.google.com/github/"
+                     "NurMohammadDuari/VoiceStudio-Colab-GPU/blob/main/notebook/"
+                     "VoiceStudio-Colab-GPU.ipynb")
+        blocks = []
+        code_n = 0
+        for cell in nb["cells"]:
+            raw = "".join(cell["source"]).strip()
+            if not raw:
+                continue
+            if cell["cell_type"] == "code":
+                code_n += 1
+                blocks.append(
+                    f'<div class="cell"><div class="cell-hd">'
+                    f'<span class="dot"></span><span class="lbl">python</span>'
+                    f'<span class="num">box {code_n}</span></div>'
+                    f'<pre><code>{html.escape(raw)}</code></pre></div>')
+            else:
+                blocks.append('<div class="cell md">'
+                              + markdown.markdown(raw, extensions=["tables", "fenced_code"])
+                              + '</div>')
+        body = (f'<div class="hero"><span class="eyebrow">{code_n} boxes</span>'
+                f'<h1>The notebook</h1>'
+                f'<p class="lede">Everything the setup does, readable without downloading anything.</p>'
+                f'<div class="cta">'
+                f'<a class="btn btn-p" href="{colab_url}" target="_blank" rel="noopener">Open in Colab</a>'
+                f'<a class="btn btn-s" href="notebook/VoiceStudio-Colab-GPU.ipynb" download>Download .ipynb</a>'
+                f'<a class="btn btn-s" href="{nb_url}" target="_blank" rel="noopener">View source</a>'
+                f'</div></div>') + "".join(blocks)
+    elif out_name == "index.html":
         # hero + the README body minus its own centre-aligned header block
         m = re.search(r'(<h1.*?</h1>)', raw, re.S)
         body = md_to_html(raw)
@@ -203,6 +247,8 @@ Not affiliated with that project. Runs on Google Colab and a Cloudflare tunnel.<
     print("built", out_name)
 
 shutil.copytree(ROOT / "assets", OUT / "assets", dirs_exist_ok=True)
+(OUT / "notebook").mkdir(exist_ok=True)
+shutil.copy(ROOT / "notebook" / "VoiceStudio-Colab-GPU.ipynb", OUT / "notebook")
 (OUT / "robots.txt").write_text("User-agent: *\nAllow: /\n", encoding="utf-8")
 (OUT / "sitemap.xml").write_text(
   '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
