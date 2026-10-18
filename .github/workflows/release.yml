@@ -1,0 +1,32 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate before tagging
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open("notebook/VoiceStudio-Colab-GPU.ipynb"))
+          for i, c in enumerate(d["cells"]):
+              if c["cell_type"] == "code":
+                  compile("".join(c["source"]), f"cell{i}", "exec")
+          print("notebook ok")
+          PY
+          for f in scripts/*.sh; do sh -n "$f"; done
+          echo "shell ok"
+      - uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          files: |
+            notebook/VoiceStudio-Colab-GPU.ipynb
+            scripts/voicestudio-remote.sh

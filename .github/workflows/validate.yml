@@ -1,0 +1,46 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Every notebook code cell must compile
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open("notebook/VoiceStudio-Colab-GPU.ipynb"))
+          code = 0
+          for i, c in enumerate(d["cells"]):
+              if c["cell_type"] == "code":
+                  src = "".join(c["source"])
+                  try:
+                      compile(src, f"cell{i}", "exec")
+                  except SyntaxError as e:
+                      raise SystemExit(f"cell {i} does not compile: {e}")
+                  assert not c.get("outputs"), f"cell {i} carries saved output"
+                  code += 1
+          print(f"ok: {code} code cells compile, no saved outputs")
+          PY
+
+      - name: Shell scripts must be valid POSIX sh
+        run: |
+          for f in scripts/*.sh; do
+            sh -n "$f"
+            shellcheck -S warning "$f" || true
+          done
+          echo "shell syntax ok"
+
+      - name: No credentials may be committed
+        run: |
+          if grep -rInE "[a-z0-9-]{4,}\.trycloudflare\.com" --exclude-dir=.git . \
+             | grep -v "three-random-words-here"; then
+            echo "::error::a live-looking tunnel hostname is committed"
+            exit 1
+          fi
+          echo "no credentials found"

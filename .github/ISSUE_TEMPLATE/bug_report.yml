@@ -1,0 +1,41 @@
+name: Bug report
+description: Something in the notebook, launcher or docs does not work
+labels: ["bug", "needs triage"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes: {label: What happened?}
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes: {label: What did you expect?}
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Which box failed, and what is the exact error text?
+    validations: {required: true}
+  - type: input
+    id: box
+    attributes:
+      label: Which box?
+      placeholder: "2 (start)"
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Colab runtime
+      options: [T4 GPU, Other GPU, CPU only, Not a Colab issue]
+    default: 0
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: App version from Settings, and the Colab runtime name
+      placeholder: "app 0.5.7, Colab T4"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Paste the last ~20 lines, not the whole log
+      render: shell

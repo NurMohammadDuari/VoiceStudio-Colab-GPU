@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest an improvement to the setup, launcher or documentation
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes: {label: What problem would this solve?}
+    validations: {required: true}
+  - type: textarea
+    id: proposal
+    attributes: {label: Proposed change}
+    validations: {required: true}
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Where?
+      options: [Notebook, Launcher, Documentation, Other]
+    default: 0
+  - type: checkboxes
+    id: effort
+    attributes:
+      label: Willingness
+      options:
+        - label: I can test a PR for this

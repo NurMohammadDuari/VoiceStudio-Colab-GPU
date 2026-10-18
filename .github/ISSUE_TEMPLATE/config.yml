@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: VoiceStudio app issues
+    url: https://github.com/debpalash/VoiceStudio/issues
+    about: Bugs in the application itself belong upstream, not here.
+  - name: Setup help
+    url: https://github.com/NurMohammadDuari/VoiceStudio-Colab-GPU/discussions
+    about: Questions are answered faster in Discussions.
