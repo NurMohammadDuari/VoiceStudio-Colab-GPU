@@ -120,9 +120,20 @@ the VoiceStudio desktop app installed. No Python, no GPU, no CUDA on the PC.</p>
 <hr />
 <h2 id="part-1-the-pc-once">Part 1 — the PC (once)</h2>
 <h3 id="1-install-the-desktop-app">1. Install the desktop app</h3>
-<pre><code class="language-sh">curl -fsSL https://voicestudio.sh/install | sh
+<pre><code class="language-sh">curl -fsSL https://raw.githubusercontent.com/NurMohammadDuari/VoiceStudio-Colab-GPU/main/install.sh | sh
 </code></pre>
-<p>This installs an AppImage to <code>~/.local/bin/VoiceStudio</code>.</p>
+<p>That single command runs <code>scripts/install-app.sh</code> (installs the official AppImage
+to <code>~/.local/bin/VoiceStudio</code>, verifying its SHA-256) followed by
+<code>scripts/install-launcher.sh</code> (launcher, icon, desktop entry).</p>
+<p>To install only the app, or to pin a version:</p>
+<pre><code class="language-sh">sh scripts/install-app.sh                  # latest release
+sh scripts/install-app.sh --version 0.5.6  # a specific release
+sh scripts/install-app.sh --check          # resolve + verify, download nothing
+sh scripts/install-app.sh --uninstall      # remove the app, keep your data
+</code></pre>
+<p>This repository hosts the installer; the application binary itself is still the
+official release from <code>debpalash/VoiceStudio</code> and is verified against that
+release's <code>SHA256SUMS.txt</code> before it is installed.</p>
 <p>On some machines (older Intel/AMD GPUs on X11) the UI needs software rendering.
 If the window is blank or crashes, always launch it through the launcher in
 Part 2 — it passes <code>--disable-gpu</code> for you.</p>

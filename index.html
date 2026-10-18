@@ -201,16 +201,23 @@ somewhere else entirely.</p>
 <a href="https://github.com/debpalash/VoiceStudio">debpalash/VoiceStudio</a>, the AGPL-3.0
 app this repo configures.</sub></p>
 <hr />
-<h2 id="quick-start-3-steps">Quick start (3 steps)</h2>
-<ol>
-<li><strong>Open the notebook</strong> →
-   <a href="notebook/VoiceStudio-Colab-GPU.ipynb"><code>notebook/VoiceStudio-Colab-GPU.ipynb</code></a>
-   in <a href="https://colab.research.google.com/">Google Colab</a>.</li>
-<li><strong>Runtime → Change runtime type → T4 GPU</strong>, then <strong>Runtime → Run all</strong>.</li>
-<li>Scroll to the end: it prints a <strong>URL</strong> and an <strong>API key</strong>. On your PC run
-   <code>./scripts/install-launcher.sh</code>, double-click the <strong>VoiceStudio</strong> icon, and
-   paste both.</li>
-</ol>
+<h2 id="quick-start">Quick start</h2>
+<p><strong>1. On your PC</strong> — one command installs the desktop app, the launcher, the icon
+and the desktop entry, all from this repository:</p>
+<pre><code class="language-sh">curl -fsSL https://raw.githubusercontent.com/NurMohammadDuari/VoiceStudio-Colab-GPU/main/install.sh | sh
+</code></pre>
+<p><strong>2. On Colab</strong> — open
+<a href="notebook/VoiceStudio-Colab-GPU.ipynb"><code>notebook/VoiceStudio-Colab-GPU.ipynb</code></a>,
+set <strong>Runtime → Change runtime type → T4 GPU</strong>, then <strong>Runtime → Run all</strong>.</p>
+<p><strong>3. Pair</strong> — scroll to the end of the output: it prints a <strong>URL</strong> and an <strong>API
+key</strong>. Double-click the <strong>VoiceStudio</strong> icon, paste the URL, then paste the key
+(it is already on your clipboard).</p>
+<blockquote>
+<p>The installer lives here, not at <code>voicestudio.sh</code>. It downloads the official
+AGPL-3.0 release from <code>debpalash/VoiceStudio</code> and verifies it against that
+release's <code>SHA256SUMS.txt</code>. Run <code>sh scripts/install-app.sh --check</code> to see what
+it would install without downloading anything.</p>
+</blockquote>
 <p>Full walkthrough: <strong><a href="docs/INSTALL.md">docs/INSTALL.md</a></strong></p>
 <hr />
 <h2 id="what-you-get">What you get</h2>
